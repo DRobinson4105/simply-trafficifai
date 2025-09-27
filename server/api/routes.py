@@ -10,5 +10,4 @@ def get3NearestCameras(latitude, longitude):
     for camera in data["cameras"]:
 
 @api_bp.route("/api")
-    # return ...
 
