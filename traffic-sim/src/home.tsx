@@ -41,20 +41,160 @@ function bearing(
 
 const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
   {elementType: "geometry", stylers: [{color: "#0b111b"}]},
-  {elementType: "labels.text.fill", stylers: [{color: "#cfd7deff"}]},
-  {elementType: "labels.text.stroke", stylers: [{color: "#0a0f18"}]},
+  {elementType: "labels.text.fill", stylers: [{color: "#ffffffff"}]},
+  {elementType: "labels.text.stroke", stylers: [{color: "#000000ff"}]},
+
+  // Hide clutter
   {featureType: "poi", stylers: [{visibility: "off"}]},
   {featureType: "transit", stylers: [{visibility: "off"}]},
   {featureType: "administrative", stylers: [{visibility: "off"}]},
-  {featureType: "road", elementType: "labels.icon", stylers: [{visibility: "off"}]},
-  {featureType: "road.local", elementType: "labels.text", stylers: [{visibility: "off"}]},
-  {featureType: "road", elementType: "geometry", stylers: [{color: "#1c2b45"}]},
-  {featureType: "road.arterial", elementType: "geometry", stylers: [{color: "#2a3038ff"}]},
-  {featureType: "road.highway", elementType: "geometry", stylers: [{color: "#415b7eff"}]},
-  {featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{color: "#3a71bf"}]},
-  {featureType: "road", elementType: "labels.text.fill", stylers: [{color: "#e9e9eaff"}]},
-  {featureType: "water", elementType: "geometry", stylers: [{color: "#0e2438"}]},
-  {featureType: "water", elementType: "labels.text.fill", stylers: [{color: "#7aa4c4"}]},
+  {
+    featureType: "road",
+    elementType: "labels.icon",
+    stylers: [{visibility: "off"}],
+  },
+  {
+    featureType: "road.local",
+    elementType: "labels.text",
+    stylers: [{visibility: "off"}],
+  },
+
+  // Roads—simple but distinct
+  {
+        "featureType": "all",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#ffffff"
+            }
+        ]
+    },
+    {
+        "featureType": "all",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "color": "#000000"
+            },
+            {
+                "lightness": 13
+            }
+        ]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#000000"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "geometry.stroke",
+        "stylers": [
+            {
+                "color": "#144b53"
+            },
+            {
+                "lightness": 14
+            },
+            {
+                "weight": 1.4
+            }
+        ]
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "all",
+        "stylers": [
+            {
+                "color": "#08304b"
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#0c4152"
+            },
+            {
+                "lightness": 5
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#000000"
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry.stroke",
+        "stylers": [
+            {
+                "color": "#0b434f"
+            },
+            {
+                "lightness": 10
+            }
+        ]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#000000"
+            }
+        ]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "geometry.stroke",
+        "stylers": [
+            {
+                "color": "#0b3d51"
+            },
+            {
+                "lightness": 16
+            }
+        ]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#000000"
+            }
+        ]
+    },
+    {
+        "featureType": "transit",
+        "elementType": "all",
+        "stylers": [
+            {
+                "color": "#146474"
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "all",
+        "stylers": [
+            {
+                "color": "#021019"
+            }
+        ]
+    }
 ];
 
 export type LatLng = {latitude: number; longitude: number};
@@ -229,74 +369,87 @@ export default function HomeScreen() {
             map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
             map.panBy(0, 60);
 
-            map.addListener("dragstart", () => setFollowVehicle(false));
-            const ignoredFirstZoom = { current: false } as { current: boolean };
-            map.addListener("zoom_changed", () => {
-              if (!ignoredFirstZoom.current) {
-                ignoredFirstZoom.current = true;
-                return;
-              }
-              setFollowVehicle(false);
-            });
-          }}
-          onUnmount={() => { mapRef.current = null; }}
-          options={{
-            disableDefaultUI: true,
-            draggable: true,
-            gestureHandling: "greedy",
-            keyboardShortcuts: false,
-            styles: NAV_MINIMAL_STYLE,
-            backgroundColor: "#0b111b",
-          }}
-        >
-          {/* Route base (darker trail) */}
-          <Polyline
-            path={route.map((p: LatLng) => ({ lat: p.latitude, lng: p.longitude }))}
-            options={{
-              strokeColor: "#262a2eff",
-              strokeOpacity: 0.60,
-              strokeWeight: 14,
-            }}
-          />
-          {/* Route top line */}
-          <Polyline
-            path={route.map((p: LatLng) => ({ lat: p.latitude, lng: p.longitude }))}
-            options={{
-              strokeColor: "#7774c4ff",
-              strokeOpacity: 0.95,
-              strokeWeight: 6,
-            }}
-          />
+          // stop following only on **user drag**
+          map.addListener("dragstart", () => setFollowVehicle(false));
 
-          {/* Start marker */}
-          <Marker
-            position={{ lat: route[0].latitude, lng: route[0].longitude }}
-            title="Start"
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: "#b7ffbf",
-              fillOpacity: 0.9,
-              strokeColor: "#2b6e3f",
-              strokeWeight: 2,
-            }}
-          />
-          {/* End marker */}
-          <Marker
-            position={{
-              lat: route[route.length - 1].latitude,
-              lng: route[route.length - 1].longitude,
-            }}
-            title="End"
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: "#b7ffbf",
-              fillOpacity: 0.9,
-              strokeColor: "#2b6e3f",
-              strokeWeight: 2,
-            }}
-          />
+          // If you also want zoom to stop following, use these — but guard initial fires:
+          const ignoredFirstZoom = {current: false} as {current: boolean};
+          map.addListener("zoom_changed", () => {
+            if (!ignoredFirstZoom.current) {
+              ignoredFirstZoom.current = true;
+              return;
+            }
+            setFollowVehicle(false);
+          });
+        }}
+        onUnmount={() => {
+          mapRef.current = null;
+        }}
+        options={{
+          disableDefaultUI: true,
+          draggable: true,
+          gestureHandling: "greedy",
+          keyboardShortcuts: false,
+          styles: NAV_MINIMAL_STYLE,
+          backgroundColor: "#0b111b",
+        }}
+      >
+        {/* Route base (darker trail) */}
+        <Polyline
+          path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+          options={{
+            strokeColor: "#ff8b38ff",
+            strokeOpacity: 0.60,
+            strokeWeight: 8,
+          }}
+        />
+        {/* Route top line (dark, crisp) */}
+        <Polyline
+          path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+          options={{
+            strokeColor: "#913000ff",
+            strokeOpacity: 0.95,
+            strokeWeight: 3,
+          }}
+        />
+
+        {/* Start marker */}
+        <Marker
+          position={{lat: route[0].latitude, lng: route[0].longitude}}
+          title="Start"
+          icon={
+            typeof google !== "undefined"
+              ? {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 8,
+                  fillColor: "#d5732dff",
+                  fillOpacity: 0.9,
+                  strokeColor: "#913000ff",
+                  strokeWeight: 2,
+                }
+              : undefined
+          }
+        />
+        {/* End marker */}
+        <Marker
+          position={{
+            lat: route[route.length - 1].latitude,
+            lng: route[route.length - 1].longitude,
+          }}
+          title="End"
+          icon={
+            typeof google !== "undefined"
+              ? {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 8,
+                  fillColor: "#d5732dff",
+                  fillOpacity: 0.9,
+                  strokeColor: "#913000ff",
+                  strokeWeight: 2,
+                }
+              : undefined
+          }
+        />
 
           {/* Vehicle halo */}
           <Marker
