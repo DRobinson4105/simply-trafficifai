@@ -238,7 +238,7 @@ export default function Header({ currentPosition, steps, className, style }: Pro
         >
           {milesLeft < 0.1
             ? `${Math.max(0, milesLeft * 5280).toFixed(0)} ft`
-            : `${milesLeft.toFixed(2)} mi`}
+            : `${milesLeft.toFixed(1)} mi`}
         </span>
       )}
     </div>
