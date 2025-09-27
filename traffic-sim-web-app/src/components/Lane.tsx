@@ -7,7 +7,7 @@ export type Lane = {
   className?: string;
 };
 
-export function laneArrowDataUrl(blocked: boolean, size = 20): string {
+export function laneArrowDataUrl(blocked: boolean, size = 24): string {
   const fill = blocked ? "#9AA3AD" : "#FFFFFF";
   const svg = `
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size + 2} ${size + 2}' width='${size}' height='${size}' fill='${fill}'>
@@ -16,7 +16,7 @@ export function laneArrowDataUrl(blocked: boolean, size = 20): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-export function Lane({ blocked, size = 20, style, className }: Lane) {
+export function Lane({ blocked, size = 24, style, className }: Lane) {
   const src = laneArrowDataUrl(blocked, size);
   return (
     <img

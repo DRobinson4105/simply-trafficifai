@@ -73,7 +73,7 @@ export default function AlertBox({
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        pointerEvents: "none", // purely visual
+        pointerEvents: "none",
         ...style,
       }}
       aria-live="polite"
