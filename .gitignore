@@ -1,6 +1,6 @@
 .env
 /node_modules
-/api/__pycache__
-/api/venv
+/server_file/api/__pycache__
+/server_file/api/venv
 .vscode
 venv
