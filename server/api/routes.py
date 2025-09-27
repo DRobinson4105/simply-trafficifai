@@ -41,11 +41,11 @@ def webcam_display():
     return Response(webcam(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/camera2', methods=['GET'])
-def webcam_display():
+def webcam_display2():
     return Response(webcam(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/camera3', methods=['GET'])
-def webcam_display():
+def webcam_display3():
     return Response(webcam(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':

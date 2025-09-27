@@ -7,8 +7,8 @@ import {
 } from "@react-google-maps/api";
 import route from "./map-routes/d_route.json";
 import Header from "./components/Header";
-import HlsPlayer from "./components/CamView";
-import AlertBox from "./components/AlertBox"
+import MjpegView from "./components/MjpegView";
+import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
@@ -38,7 +38,7 @@ function bearing(
 }
 
 const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
-// Base tones
+  // Base tones
   {elementType: "geometry", stylers: [{color: "#0b111b"}]},
   {elementType: "labels.text.fill", stylers: [{color: "#ffffffff"}]},
   {elementType: "labels.text.stroke", stylers: [{color: "#000000ff"}]},
@@ -60,140 +60,140 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
 
   // Roads—simple but distinct
   {
-        "featureType": "all",
-        "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#ffffff"
-            }
-        ]
-    },
-    {
-        "featureType": "all",
-        "elementType": "labels.text.stroke",
-        "stylers": [
-            {
-                "color": "#000000"
-            },
-            {
-                "lightness": 13
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#144b53"
-            },
-            {
-                "lightness": 14
-            },
-            {
-                "weight": 1.4
-            }
-        ]
-    },
-    {
-        "featureType": "landscape",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#08304b"
-            }
-        ]
-    },
-    {
-        "featureType": "poi",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#0c4152"
-            },
-            {
-                "lightness": 5
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b434f"
-            },
-            {
-                "lightness": 10
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b3d51"
-            },
-            {
-                "lightness": 16
-            }
-        ]
-    },
-    {
-        "featureType": "road.local",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "transit",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#146474"
-            }
-        ]
-    },
-    {
-        "featureType": "water",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#021019"
-            }
-        ]
-    }
+    featureType: "all",
+    elementType: "labels.text.fill",
+    stylers: [
+      {
+        color: "#ffffff",
+      },
+    ],
+  },
+  {
+    featureType: "all",
+    elementType: "labels.text.stroke",
+    stylers: [
+      {
+        color: "#000000",
+      },
+      {
+        lightness: 13,
+      },
+    ],
+  },
+  {
+    featureType: "administrative",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "administrative",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#144b53",
+      },
+      {
+        lightness: 14,
+      },
+      {
+        weight: 1.4,
+      },
+    ],
+  },
+  {
+    featureType: "landscape",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#08304b",
+      },
+    ],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [
+      {
+        color: "#0c4152",
+      },
+      {
+        lightness: 5,
+      },
+    ],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#0b434f",
+      },
+      {
+        lightness: 10,
+      },
+    ],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#0b3d51",
+      },
+      {
+        lightness: 16,
+      },
+    ],
+  },
+  {
+    featureType: "road.local",
+    elementType: "geometry",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "transit",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#146474",
+      },
+    ],
+  },
+  {
+    featureType: "water",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#021019",
+      },
+    ],
+  },
 ];
 
 export type LatLng = {latitude: number; longitude: number};
@@ -230,10 +230,6 @@ export default function HomeScreen() {
 
   const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
 
-  const [hls1, setHls1] = useState<string | undefined>(undefined);
-  const [hls2, setHls2] = useState<string | undefined>(undefined);
-  const [hls3, setHls3] = useState<string | undefined>(undefined);
-
   const mapRef = useRef<google.maps.Map | null>(null);
   const lastAlertMessageRef = useRef<string | null>(null);
   const followRef = useRef(true);
@@ -257,7 +253,10 @@ export default function HomeScreen() {
     if (!isLoaded) return;
 
     const svc = new google.maps.DirectionsService();
-    const origin = new google.maps.LatLng(route[0].latitude, route[0].longitude);
+    const origin = new google.maps.LatLng(
+      route[0].latitude,
+      route[0].longitude
+    );
     const destination = new google.maps.LatLng(
       route[route.length - 1].latitude,
       route[route.length - 1].longitude
@@ -280,7 +279,11 @@ export default function HomeScreen() {
         provideRouteAlternatives: false,
       },
       (res, status) => {
-        if (status === google.maps.DirectionsStatus.OK && res && res.routes[0]) {
+        if (
+          status === google.maps.DirectionsStatus.OK &&
+          res &&
+          res.routes[0]
+        ) {
           const flat = res.routes[0].legs?.flatMap((l) => l.steps ?? []) ?? [];
           setSteps(flat);
         } else {
@@ -385,11 +388,11 @@ useEffect(() => {
       <div style={{flex: "0 0 50%", position: "relative"}}>
         {isLoaded ? (
           <GoogleMap
-            mapContainerStyle={{ width: "100%", height: "100%" }}
+            mapContainerStyle={{width: "100%", height: "100%"}}
             zoom={15}
             onLoad={(map) => {
               mapRef.current = map;
-              map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
+              map.setCenter({lat: route[0].latitude, lng: route[0].longitude});
               map.panBy(0, 60);
 
               map.addListener("dragstart", () => setFollowVehicle(false));
@@ -416,10 +419,13 @@ useEffect(() => {
             }}
           >
             <Polyline
-              path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+              path={route.map((p: LatLng) => ({
+                lat: p.latitude,
+                lng: p.longitude,
+              }))}
               options={{
                 strokeColor: "#fff7eeff",
-                strokeOpacity: 0.50,
+                strokeOpacity: 0.5,
                 strokeWeight: 8,
               }}
             />
@@ -530,36 +536,38 @@ useEffect(() => {
         )}
         <Header currentPosition={currentPosition} steps={steps} />
 
-      {currentAlert && (
-        <div
+        {currentAlert && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              right: 160,
+              zIndex: 1000,
+              pointerEvents: "none",
+            }}
+          >
+            <AlertBox text={currentAlert} />
+          </div>
+        )}
+        <CenterButton
+          label={followVehicle ? "Following…" : "Recenter"}
+          onClick={() => {
+            setFollowVehicle(true);
+            const pos = {
+              lat: currentPosition.latitude,
+              lng: currentPosition.longitude,
+            };
+            mapRef.current?.setCenter(pos);
+            mapRef.current?.panBy(0, 60);
+          }}
           style={{
             position: "absolute",
             bottom: 20,
-            left: 20,
-            right: 160,
-            zIndex: 1000,
-            pointerEvents: "none",
+            right: 20,
+            zIndex: 1001,
           }}
-        >
-          <AlertBox text={currentAlert} />
-
-        </div>
-      )}
-      <CenterButton
-        label={followVehicle ? "Following…" : "Recenter"}
-        onClick={() => {
-          setFollowVehicle(true);
-          const pos = { lat: currentPosition.latitude, lng: currentPosition.longitude };
-          mapRef.current?.setCenter(pos);
-          mapRef.current?.panBy(0, 60);
-        }}
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          zIndex: 1001,
-        }}
-      />
+        />
       </div>
       <div
         style={{
@@ -581,8 +589,9 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls1} />
+          <MjpegView src={"http://localhost:5001/camera1"} />
         </div>
+
         <div
           style={{
             flex: 1,
@@ -593,8 +602,9 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls2} />
+          <MjpegView src={"http://localhost:5001/camera2"} />
         </div>
+
         <div
           style={{
             flex: 1,
@@ -605,7 +615,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls3} />
+          <MjpegView src={"http://localhost:5001/camera3"} />
         </div>
       </div>
     </div>
