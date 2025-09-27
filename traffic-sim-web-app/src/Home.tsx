@@ -7,8 +7,8 @@ import {
 } from "@react-google-maps/api";
 import route from "./map-routes/d_route.json";
 import Header from "./components/Header";
-import HlsPlayer from "./components/CamView";
-import AlertBox from "./components/AlertBox"
+import MjpegView from "./components/MjpegView";
+import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
@@ -38,7 +38,7 @@ function bearing(
 }
 
 const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
-// Base tones
+  // Base tones
   {elementType: "geometry", stylers: [{color: "#0b111b"}]},
   {elementType: "labels.text.fill", stylers: [{color: "#ffffffff"}]},
   {elementType: "labels.text.stroke", stylers: [{color: "#000000ff"}]},
@@ -58,142 +58,142 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
     stylers: [{visibility: "off"}],
   },
 
-  // Roads—simple but distinct
+  // Roads—simle but distinct
   {
-        "featureType": "all",
-        "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#ffffff"
-            }
-        ]
-    },
-    {
-        "featureType": "all",
-        "elementType": "labels.text.stroke",
-        "stylers": [
-            {
-                "color": "#000000"
-            },
-            {
-                "lightness": 13
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#144b53"
-            },
-            {
-                "lightness": 14
-            },
-            {
-                "weight": 1.4
-            }
-        ]
-    },
-    {
-        "featureType": "landscape",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#08304b"
-            }
-        ]
-    },
-    {
-        "featureType": "poi",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#0c4152"
-            },
-            {
-                "lightness": 5
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b434f"
-            },
-            {
-                "lightness": 10
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b3d51"
-            },
-            {
-                "lightness": 16
-            }
-        ]
-    },
-    {
-        "featureType": "road.local",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "transit",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#146474"
-            }
-        ]
-    },
-    {
-        "featureType": "water",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#021019"
-            }
-        ]
-    }
+    featureType: "all",
+    elementType: "labels.text.fill",
+    stylers: [
+      {
+        color: "#ffffff",
+      },
+    ],
+  },
+  {
+    featureType: "all",
+    elementType: "labels.text.stroke",
+    stylers: [
+      {
+        color: "#000000",
+      },
+      {
+        lightness: 13,
+      },
+    ],
+  },
+  {
+    featureType: "administrative",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "administrative",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#144b53",
+      },
+      {
+        lightness: 14,
+      },
+      {
+        weight: 1.4,
+      },
+    ],
+  },
+  {
+    featureType: "landscape",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#08304b",
+      },
+    ],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [
+      {
+        color: "#0c4152",
+      },
+      {
+        lightness: 5,
+      },
+    ],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#0b434f",
+      },
+      {
+        lightness: 10,
+      },
+    ],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "geometry.fill",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "geometry.stroke",
+    stylers: [
+      {
+        color: "#0b3d51",
+      },
+      {
+        lightness: 16,
+      },
+    ],
+  },
+  {
+    featureType: "road.local",
+    elementType: "geometry",
+    stylers: [
+      {
+        color: "#000000",
+      },
+    ],
+  },
+  {
+    featureType: "transit",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#146474",
+      },
+    ],
+  },
+  {
+    featureType: "water",
+    elementType: "all",
+    stylers: [
+      {
+        color: "#021019",
+      },
+    ],
+  },
 ];
 
 export type LatLng = {latitude: number; longitude: number};
@@ -230,10 +230,6 @@ export default function HomeScreen() {
 
   const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
 
-  const [hls1, setHls1] = useState<string | undefined>(undefined);
-  const [hls2, setHls2] = useState<string | undefined>(undefined);
-  const [hls3, setHls3] = useState<string | undefined>(undefined);
-
   const mapRef = useRef<google.maps.Map | null>(null);
   const lastAlertMessageRef = useRef<string | null>(null);
   const followRef = useRef(true);
@@ -253,11 +249,35 @@ export default function HomeScreen() {
     libraries: ["maps"],
   });
 
+  // Fire the POST exactly once (even in React 18 StrictMode dev)
+  const didBootPostRef = useRef(false);
+
+  useEffect(() => {
+    if (didBootPostRef.current) return;
+    didBootPostRef.current = true;
+
+    (async () => {
+      try {
+        await fetch('api/build-path', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(route),
+          keepalive: true,
+        });
+      } catch (err) {
+        console.warn("Startup POST failed:", err);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     if (!isLoaded) return;
 
     const svc = new google.maps.DirectionsService();
-    const origin = new google.maps.LatLng(route[0].latitude, route[0].longitude);
+    const origin = new google.maps.LatLng(
+      route[0].latitude,
+      route[0].longitude
+    );
     const destination = new google.maps.LatLng(
       route[route.length - 1].latitude,
       route[route.length - 1].longitude
@@ -280,7 +300,11 @@ export default function HomeScreen() {
         provideRouteAlternatives: false,
       },
       (res, status) => {
-        if (status === google.maps.DirectionsStatus.OK && res && res.routes[0]) {
+        if (
+          status === google.maps.DirectionsStatus.OK &&
+          res &&
+          res.routes[0]
+        ) {
           const flat = res.routes[0].legs?.flatMap((l) => l.steps ?? []) ?? [];
           setSteps(flat);
         } else {
@@ -291,71 +315,88 @@ export default function HomeScreen() {
     );
   }, [isLoaded]);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    let progressLocal = 0;
-    let frameId = 0;
+const [playing, setPlaying] = useState(false);
+const progressLocal = useRef<number>(0);
 
-    const speak = (msg: string) => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        const utter = new SpeechSynthesisUtterance(msg);
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utter);
-      }
-    };
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === 'Space') setPlaying((p) => !p);
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
 
-    const animate = () => {
-      const step = Math.min(speed, maxSpeed);
-      progressLocal += step;
-      if (progressLocal > totalDistance) progressLocal = 0;
+// --- ANIMATION EFFECT ---
+useEffect(() => {
+  if (!isLoaded || !playing) return;
 
-      let traveled = 0;
-      for (let i = 1; i < route.length; i++) {
-        const segDist = distances[i];
-        if (traveled + segDist >= progressLocal) {
-          const frac = (progressLocal - traveled) / segDist;
-          const lat =
-            route[i - 1].latitude +
-            frac * (route[i].latitude - route[i - 1].latitude);
-          const lng =
-            route[i - 1].longitude +
-            frac * (route[i].longitude - route[i - 1].longitude);
-          const newPos = {latitude: lat, longitude: lng};
+  let frameId = 0;
+  const speak = (msg: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const utter = new SpeechSynthesisUtterance(msg);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+  };
 
-          setCurrentPosition(newPos);
-          setCurrentIndex(i);
+  const animate = () => {
+    const step = Math.min(speed, maxSpeed);
+    progressLocal.current += step;
+    if (progressLocal.current >= totalDistance) {
+      setPlaying(false); // <-- pause when at end
+      return; // <-- exit animation, don't update position, don't call RAF again
+    }
 
-          if (followRef.current && mapRef.current) {
-            mapRef.current.setCenter({lat, lng});
-          }
+    let traveled = 0;
+    for (let i = 1; i < route.length; i++) {
+      const segDist = distances[i];
+      if (traveled + segDist >= progressLocal.current) {
+        const frac = (progressLocal.current - traveled) / segDist;
+        const lat =
+          route[i - 1].latitude +
+          frac * (route[i].latitude - route[i - 1].latitude);
+        const lng =
+          route[i - 1].longitude +
+          frac * (route[i].longitude - route[i - 1].longitude);
+        const newPos = { latitude: lat, longitude: lng };
 
-          const activeAlert = alerts.find(
-            (a) => i >= a.startIndex && i <= a.endIndex
-          );
-          if (activeAlert) {
-            if (lastAlertMessageRef.current !== activeAlert.info) {
-              setCurrentAlert(activeAlert.info);
-              speak(activeAlert.info);
-              lastAlertMessageRef.current = activeAlert.info;
-            }
-          } else if (lastAlertMessageRef.current !== null) {
-            setCurrentAlert(null);
-            speak("All clear");
-            lastAlertMessageRef.current = null;
-          }
+        setCurrentPosition(newPos);
+        setCurrentIndex(i);
 
-          break;
+        // Camera follow
+        if (followRef.current && mapRef.current) {
+          mapRef.current.setCenter({ lat, lng });
         }
-        traveled += segDist;
-      }
 
-      frameId = requestAnimationFrame(animate);
-    };
+        // Alert logic
+        const activeAlert = alerts.find(
+          (a) => i >= a.startIndex && i <= a.endIndex
+        );
+        if (activeAlert) {
+          if (lastAlertMessageRef.current !== activeAlert.info) {
+            setCurrentAlert(activeAlert.info);
+            speak(activeAlert.info);
+            lastAlertMessageRef.current = activeAlert.info;
+          }
+        } else if (lastAlertMessageRef.current !== null) {
+          setCurrentAlert(null);
+          speak("All clear");
+          lastAlertMessageRef.current = null;
+        }
+
+        break; // <---- do not forget this!
+      }
+      traveled += segDist;
+    }
 
     frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
-  }, [isLoaded, speed, alerts, distances, totalDistance]);
+  };
 
+  frameId = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(frameId);
+
+  // Don't forget to include all needed dependencies!
+}, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance, alerts]);
   const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
   const prev = route[idx - 1];
   const next = route[idx];
@@ -376,11 +417,11 @@ export default function HomeScreen() {
       <div style={{flex: "0 0 50%", position: "relative"}}>
         {isLoaded ? (
           <GoogleMap
-            mapContainerStyle={{ width: "100%", height: "100%" }}
+            mapContainerStyle={{width: "100%", height: "100%"}}
             zoom={15}
             onLoad={(map) => {
               mapRef.current = map;
-              map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
+              map.setCenter({lat: route[0].latitude, lng: route[0].longitude});
               map.panBy(0, 60);
 
               map.addListener("dragstart", () => setFollowVehicle(false));
@@ -407,10 +448,13 @@ export default function HomeScreen() {
             }}
           >
             <Polyline
-              path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+              path={route.map((p: LatLng) => ({
+                lat: p.latitude,
+                lng: p.longitude,
+              }))}
               options={{
                 strokeColor: "#fff7eeff",
-                strokeOpacity: 0.50,
+                strokeOpacity: 0.5,
                 strokeWeight: 8,
               }}
             />
@@ -521,36 +565,38 @@ export default function HomeScreen() {
         )}
         <Header currentPosition={currentPosition} steps={steps} />
 
-      {currentAlert && (
-        <div
+        {currentAlert && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              right: 160,
+              zIndex: 1000,
+              pointerEvents: "none",
+            }}
+          >
+            <AlertBox text={currentAlert} />
+          </div>
+        )}
+        <CenterButton
+          label={followVehicle ? "Following…" : "Recenter"}
+          onClick={() => {
+            setFollowVehicle(true);
+            const pos = {
+              lat: currentPosition.latitude,
+              lng: currentPosition.longitude,
+            };
+            mapRef.current?.setCenter(pos);
+            mapRef.current?.panBy(0, 60);
+          }}
           style={{
             position: "absolute",
             bottom: 20,
-            left: 20,
-            right: 160,
-            zIndex: 1000,
-            pointerEvents: "none",
+            right: 20,
+            zIndex: 1001,
           }}
-        >
-          <AlertBox text={currentAlert} />
-
-        </div>
-      )}
-      <CenterButton
-        label={followVehicle ? "Following…" : "Recenter"}
-        onClick={() => {
-          setFollowVehicle(true);
-          const pos = { lat: currentPosition.latitude, lng: currentPosition.longitude };
-          mapRef.current?.setCenter(pos);
-          mapRef.current?.panBy(0, 60);
-        }}
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          zIndex: 1001,
-        }}
-      />
+        />
       </div>
       <div
         style={{
@@ -572,8 +618,9 @@ export default function HomeScreen() {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls1} />
+          <MjpegView src={"http://localhost:5001/camera1"} />
         </div>
+
         <div
           style={{
             flex: 1,
@@ -584,8 +631,9 @@ export default function HomeScreen() {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls2} />
+          <MjpegView src={"http://localhost:5001/camera2"} />
         </div>
+
         <div
           style={{
             flex: 1,
@@ -596,7 +644,7 @@ export default function HomeScreen() {
             overflow: "hidden",
           }}
         >
-          <HlsPlayer src={hls3} />
+          <MjpegView src={"http://localhost:5001/camera3"} />
         </div>
       </div>
     </div>
