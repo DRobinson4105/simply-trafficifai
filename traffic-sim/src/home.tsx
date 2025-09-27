@@ -7,6 +7,8 @@ import {
 } from "@react-google-maps/api";
 import route from "./route.json";
 import Header from "./header";
+import AlertBox from "./alertbox"
+import CenterButton from "./center-button";
 
 const GOOGLE_MAPS_API_KEY =
   (typeof import.meta !== "undefined" &&
@@ -44,7 +46,6 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
   {elementType: "labels.text.fill", stylers: [{color: "#ffffffff"}]},
   {elementType: "labels.text.stroke", stylers: [{color: "#000000ff"}]},
 
-  // Hide clutter
   {featureType: "poi", stylers: [{visibility: "off"}]},
   {featureType: "transit", stylers: [{visibility: "off"}]},
   {featureType: "administrative", stylers: [{visibility: "off"}]},
@@ -498,74 +499,36 @@ export default function HomeScreen() {
       )}
 
       <Header currentPosition={currentPosition} steps={steps} />
+  {currentAlert && (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 20,
+        left: 20,
+        right: 160,
+        zIndex: 1000,
+        pointerEvents: "none",
+      }}
+    >
+      <AlertBox text={currentAlert} />
 
-  <div
+    </div>
+  )}
+  <CenterButton
+    label={followVehicle ? "Following…" : "Recenter"}
+    onClick={() => {
+      setFollowVehicle(true);
+      const pos = { lat: currentPosition.latitude, lng: currentPosition.longitude };
+      mapRef.current?.setCenter(pos);
+      mapRef.current?.panBy(0, 60);
+    }}
     style={{
       position: "absolute",
       bottom: 20,
-      left: 20,
       right: 20,
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      pointerEvents: "none",
+      zIndex: 1001,
     }}
-  >
-
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        backdropFilter: "blur(8px)",
-        background: "rgba(12, 18, 28, 0.55)",
-        border: "1px solid rgba(142, 195, 255, 0.18)",
-        padding: "12px 14px",
-        borderRadius: 12,
-        color: "#E8F1F8",
-        fontWeight: 700,
-        fontSize: 15,
-        letterSpacing: 0.2,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-        textAlign: "left",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        pointerEvents: "none",
-      }}
-      aria-live="polite"
-    >
-      {currentAlert || "All clear"}
-    </div>
-
-    <button
-      onClick={() => {
-        setFollowVehicle(true);
-        const pos = {
-          lat: currentPosition.latitude,
-          lng: currentPosition.longitude,
-        };
-        mapRef.current?.setCenter(pos);
-        mapRef.current?.panBy(0, 60);
-      }}
-      style={{
-        background: "#1E90FF",
-        color: "white",
-        border: "none",
-        padding: "10px 14px",
-        borderRadius: 10,
-        fontWeight: 700,
-        cursor: "pointer",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-        whiteSpace: "nowrap",
-
-        pointerEvents: "auto",
-      }}
-      aria-label="Recenter on vehicle"
-      title="Recenter on vehicle"
-    >
-      {followVehicle ? "Following…" : "Recenter"}
-    </button>
-  </div>
+  />
   </div>
   );
 }
