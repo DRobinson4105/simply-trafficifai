@@ -296,6 +296,7 @@ export default function HomeScreen() {
 
 const [playing, setPlaying] = useState(false);
 const progressLocal = useRef<number>(0);
+
 useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.code === 'Space') setPlaying((p) => !p);
@@ -304,70 +305,74 @@ useEffect(() => {
   return () => window.removeEventListener('keydown', handleKeyDown);
 }, []);
 
+// --- ANIMATION EFFECT ---
 useEffect(() => {
   if (!isLoaded || !playing) return;
 
   let frameId = 0;
-    const speak = (msg: string) => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        const utter = new SpeechSynthesisUtterance(msg);
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utter);
-      }
-    };
+  const speak = (msg: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const utter = new SpeechSynthesisUtterance(msg);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+  };
 
-    const animate = () => {
-      const step = Math.min(speed, maxSpeed);
-      progressLocal.current += step;
-      if (progressLocal.current > totalDistance) progressLocal.current = 0;
+  const animate = () => {
+    const step = Math.min(speed, maxSpeed);
+    progressLocal.current += step;
+    if (progressLocal.current > totalDistance) progressLocal.current = 0;
 
-      let traveled = 0;
-      for (let i = 1; i < route.length; i++) {
-        const segDist = distances[i];
-        if (traveled + segDist >= progressLocal.current) {
-          const frac = (progressLocal.current - traveled) / segDist;
-          const lat =
-            route[i - 1].latitude +
-            frac * (route[i].latitude - route[i - 1].latitude);
-          const lng =
-            route[i - 1].longitude +
-            frac * (route[i].longitude - route[i - 1].longitude);
-          const newPos = {latitude: lat, longitude: lng};
+    let traveled = 0;
+    for (let i = 1; i < route.length; i++) {
+      const segDist = distances[i];
+      if (traveled + segDist >= progressLocal.current) {
+        const frac = (progressLocal.current - traveled) / segDist;
+        const lat =
+          route[i - 1].latitude +
+          frac * (route[i].latitude - route[i - 1].latitude);
+        const lng =
+          route[i - 1].longitude +
+          frac * (route[i].longitude - route[i - 1].longitude);
+        const newPos = { latitude: lat, longitude: lng };
 
-          setCurrentPosition(newPos);
-          setCurrentIndex(i);
+        setCurrentPosition(newPos);
+        setCurrentIndex(i);
 
-          if (followRef.current && mapRef.current) {
-            mapRef.current.setCenter({lat, lng});
-          }
-          
-          const activeAlert = alerts.find(
-            (a) => i >= a.startIndex && i <= a.endIndex
-          );
-          if (activeAlert) {
-            if (lastAlertMessageRef.current !== activeAlert.info) {
-              setCurrentAlert(activeAlert.info);
-              speak(activeAlert.info);
-              lastAlertMessageRef.current = activeAlert.info;
-            }
-          } else if (lastAlertMessageRef.current !== null) {
-            setCurrentAlert(null);
-            speak("All clear");
-            lastAlertMessageRef.current = null;
-          }
-
-          break;
+        // Camera follow
+        if (followRef.current && mapRef.current) {
+          mapRef.current.setCenter({ lat, lng });
         }
-        traveled += segDist;
-      }
 
-      frameId = requestAnimationFrame(animate);
-    };
+        // Alert logic
+        const activeAlert = alerts.find(
+          (a) => i >= a.startIndex && i <= a.endIndex
+        );
+        if (activeAlert) {
+          if (lastAlertMessageRef.current !== activeAlert.info) {
+            setCurrentAlert(activeAlert.info);
+            speak(activeAlert.info);
+            lastAlertMessageRef.current = activeAlert.info;
+          }
+        } else if (lastAlertMessageRef.current !== null) {
+          setCurrentAlert(null);
+          speak("All clear");
+          lastAlertMessageRef.current = null;
+        }
+
+        break; // <---- do not forget this!
+      }
+      traveled += segDist;
+    }
 
     frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
-  }, [isLoaded, speed, alerts, distances, totalDistance]);
+  };
 
+  frameId = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(frameId);
+
+  // Don't forget to include all needed dependencies!
+}, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance, alerts]);
   const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
   const prev = route[idx - 1];
   const next = route[idx];
