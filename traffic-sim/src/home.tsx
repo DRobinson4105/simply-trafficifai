@@ -7,6 +7,7 @@ import {
 } from "@react-google-maps/api";
 import route from "./route.json";
 import Header from "./header";
+import HlsPlayer from "./cam_view"; // <-- add this
 import AlertBox from "./alertbox"
 import CenterButton from "./center-button";
 
@@ -61,140 +62,70 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
   },
 
   {
-        "featureType": "all",
-        "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#ffffff"
-            }
-        ]
-    },
-    {
-        "featureType": "all",
-        "elementType": "labels.text.stroke",
-        "stylers": [
-            {
-                "color": "#000000"
-            },
-            {
-                "lightness": 13
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "administrative",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#144b53"
-            },
-            {
-                "lightness": 14
-            },
-            {
-                "weight": 1.4
-            }
-        ]
-    },
-    {
-        "featureType": "landscape",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#08304b"
-            }
-        ]
-    },
-    {
-        "featureType": "poi",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#0c4152"
-            },
-            {
-                "lightness": 5
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b434f"
-            },
-            {
-                "lightness": 10
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.fill",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "geometry.stroke",
-        "stylers": [
-            {
-                "color": "#0b3d51"
-            },
-            {
-                "lightness": 16
-            }
-        ]
-    },
-    {
-        "featureType": "road.local",
-        "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#000000"
-            }
-        ]
-    },
-    {
-        "featureType": "transit",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#146474"
-            }
-        ]
-    },
-    {
-        "featureType": "water",
-        "elementType": "all",
-        "stylers": [
-            {
-                "color": "#021019"
-            }
-        ]
-    }
+    "featureType": "all",
+    "elementType": "labels.text.fill",
+    "stylers": [{"color": "#ffffff"}]
+  },
+  {
+    "featureType": "all",
+    "elementType": "labels.text.stroke",
+    "stylers": [{"color": "#000000"},{"lightness": 13}]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry.fill",
+    "stylers": [{"color": "#000000"}]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry.stroke",
+    "stylers": [{"color": "#144b53"},{"lightness": 14},{"weight": 1.4}]
+  },
+  {
+    "featureType": "landscape",
+    "elementType": "all",
+    "stylers": [{"color": "#08304b"}]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "geometry",
+    "stylers": [{"color": "#0c4152"},{"lightness": 5}]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry.fill",
+    "stylers": [{"color": "#000000"}]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry.stroke",
+    "stylers": [{"color": "#0b434f"},{"lightness": 10}]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry.fill",
+    "stylers": [{"color": "#000000"}]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry.stroke",
+    "stylers": [{"color": "#0b3d51"},{"lightness": 16}]
+  },
+  {
+    "featureType": "road.local",
+    "elementType": "geometry",
+    "stylers": [{"color": "#000000"}]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "all",
+    "stylers": [{"color": "#146474"}]
+  },
+  {
+    "featureType": "water",
+    "elementType": "all",
+    "stylers": [{"color": "#021019"}]
+  }
 ];
 
 export type LatLng = {latitude: number; longitude: number};
@@ -230,6 +161,18 @@ export default function HomeScreen() {
   const maxSpeed = 0.00003;
 
   const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
+
+  // NEW: three HLS slots (wire these to your backend response)
+  const [hls1, setHls1] = useState<string | undefined>(undefined);
+  const [hls2, setHls2] = useState<string | undefined>(undefined);
+  const [hls3, setHls3] = useState<string | undefined>(undefined);
+
+  // // Optional: quick test streams
+  // useEffect(() => {
+  //   setHls1("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+  //   setHls2("https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8");
+  //   setHls3("https://mojen.se/live/cdn/playlist.m3u8");
+  // }, []);
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const lastAlertMessageRef = useRef<string | null>(null);
@@ -359,176 +302,275 @@ export default function HomeScreen() {
   const headingDeg = prev && next ? bearing(prev, next) : 0;
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      {isLoaded ? (
-        <GoogleMap
-          mapContainerStyle={{ width: "100%", height: "100%" }}
-          zoom={15}
-          onLoad={(map) => {
-            mapRef.current = map;
-            map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
-            map.panBy(0, 60);
-
-          map.addListener("dragstart", () => setFollowVehicle(false));
-
-          const ignoredFirstZoom = {current: false} as {current: boolean};
-          map.addListener("zoom_changed", () => {
-            if (!ignoredFirstZoom.current) {
-              ignoredFirstZoom.current = true;
-              return;
-            }
-            setFollowVehicle(false);
-          });
-        }}
-        onUnmount={() => {
-          mapRef.current = null;
-        }}
-        options={{
-          disableDefaultUI: true,
-          draggable: true,
-          gestureHandling: "greedy",
-          keyboardShortcuts: false,
-          styles: NAV_MINIMAL_STYLE,
-          backgroundColor: "#0b111b",
-        }}
-      >
-        <Polyline
-          path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
-          options={{
-            strokeColor: "#ff8b38ff",
-            strokeOpacity: 0.60,
-            strokeWeight: 8,
-          }}
-        />
-        <Polyline
-          path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
-          options={{
-            strokeColor: "#913000ff",
-            strokeOpacity: 0.95,
-            strokeWeight: 3,
-          }}
-        />
-
-        <Marker
-          position={{lat: route[0].latitude, lng: route[0].longitude}}
-          title="Start"
-          icon={
-            typeof google !== "undefined"
-              ? {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 8,
-                  fillColor: "#d5732dff",
-                  fillOpacity: 0.9,
-                  strokeColor: "#913000ff",
-                  strokeWeight: 2,
-                }
-              : undefined
-          }
-        />
-        <Marker
-          position={{
-            lat: route[route.length - 1].latitude,
-            lng: route[route.length - 1].longitude,
-          }}
-          title="End"
-          icon={
-            typeof google !== "undefined"
-              ? {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 8,
-                  fillColor: "#d5732dff",
-                  fillOpacity: 0.9,
-                  strokeColor: "#913000ff",
-                  strokeWeight: 2,
-                }
-              : undefined
-          }
-        />
-
-          <Marker
-            position={{
-              lat: currentPosition.latitude,
-              lng: currentPosition.longitude,
-            }}
-            clickable={false}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 18,
-              fillColor: "#ffffff",
-              fillOpacity: 1,
-              strokeColor: "#1876d3ff",
-              strokeOpacity: 1,
-              strokeWeight: 2,
-              anchor: new google.maps.Point(0, 0),
-            }}
-            zIndex={google.maps.Marker.MAX_ZINDEX! - 1}
-          />
-
-          <Marker
-            position={{
-              lat: currentPosition.latitude,
-              lng: currentPosition.longitude,
-            }}
-            clickable={false}
-            icon={{
-              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-              scale: 5,
-              fillColor: "#1c81e6ff",
-              fillOpacity: 1,
-              strokeColor: "#1c81e6ff",
-              strokeWeight: 1,
-              rotation: headingDeg,
-              anchor: new google.maps.Point(0, 2.5),
-            }}
-            zIndex={google.maps.Marker.MAX_ZINDEX}
-          />
-        </GoogleMap>
-      ) : (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            placeItems: "center",
-            color: "#E8F1F8",
-            background: "#0b111b",
-          }}
-        >
-          Loading map…
-        </div>
-      )}
-
-      <Header currentPosition={currentPosition} steps={steps} />
-  {currentAlert && (
     <div
       style={{
-        position: "absolute",
-        bottom: 20,
-        left: 20,
-        right: 160,
-        zIndex: 1000,
-        pointerEvents: "none",
+        display: "flex",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+        background: "#0b111b",
+        position: "relative",
       }}
     >
-      <AlertBox text={currentAlert} />
+      {/* LEFT PANE: Map */}
+      <div style={{flex: "0 0 50%", position: "relative"}}>
+        {isLoaded ? (
+          <GoogleMap
+            mapContainerStyle={{ width: "100%", height: "100%" }}
+            zoom={15}
+            onLoad={(map) => {
+              mapRef.current = map;
+              map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
+              map.panBy(0, 60);
 
+              map.addListener("dragstart", () => setFollowVehicle(false));
+
+              const ignoredFirstZoom = {current: false} as {current: boolean};
+              map.addListener("zoom_changed", () => {
+                if (!ignoredFirstZoom.current) {
+                  ignoredFirstZoom.current = true;
+                  return;
+                }
+                setFollowVehicle(false);
+              });
+            }}
+            onUnmount={() => {
+              mapRef.current = null;
+            }}
+            options={{
+              disableDefaultUI: true,
+              draggable: true,
+              gestureHandling: "greedy",
+              keyboardShortcuts: false,
+              styles: NAV_MINIMAL_STYLE,
+              backgroundColor: "#0b111b",
+            }}
+          >
+            <Polyline
+              path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+              options={{
+                strokeColor: "#ff8b38ff",
+                strokeOpacity: 0.60,
+                strokeWeight: 8,
+              }}
+            />
+            <Polyline
+              path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
+              options={{
+                strokeColor: "#913000ff",
+                strokeOpacity: 0.95,
+                strokeWeight: 3,
+              }}
+            />
+
+            <Marker
+              position={{lat: route[0].latitude, lng: route[0].longitude}}
+              title="Start"
+              icon={
+                typeof google !== "undefined"
+                  ? {
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 8,
+                      fillColor: "#d5732dff",
+                      fillOpacity: 0.9,
+                      strokeColor: "#913000ff",
+                      strokeWeight: 2,
+                    }
+                  : undefined
+              }
+            />
+            <Marker
+              position={{
+                lat: route[route.length - 1].latitude,
+                lng: route[route.length - 1].longitude,
+              }}
+              title="End"
+              icon={
+                typeof google !== "undefined"
+                  ? {
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 8,
+                      fillColor: "#d5732dff",
+                      fillOpacity: 0.9,
+                      strokeColor: "#913000ff",
+                      strokeWeight: 2,
+                    }
+                  : undefined
+              }
+            />
+
+            <Marker
+              position={{
+                lat: currentPosition.latitude,
+                lng: currentPosition.longitude,
+              }}
+              clickable={false}
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 18,
+                fillColor: "#ffffff",
+                fillOpacity: 1,
+                strokeColor: "#1876d3ff",
+                strokeOpacity: 1,
+                strokeWeight: 2,
+                anchor: new google.maps.Point(0, 0),
+              }}
+              zIndex={google.maps.Marker.MAX_ZINDEX! - 1}
+            />
+
+            <Marker
+              position={{
+                lat: currentPosition.latitude,
+                lng: currentPosition.longitude,
+              }}
+              clickable={false}
+              icon={{
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 5,
+                fillColor: "#1c81e6ff",
+                fillOpacity: 1,
+                strokeColor: "#1c81e6ff",
+                strokeWeight: 1,
+                rotation: headingDeg,
+                anchor: new google.maps.Point(0, 2.5),
+              }}
+              zIndex={google.maps.Marker.MAX_ZINDEX}
+            />
+          </GoogleMap>
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "grid",
+              placeItems: "center",
+              color: "#E8F1F8",
+              background: "#0b111b",
+            }}
+          >
+            Loading map…
+          </div>
+        )}
+
+        {/* Header stays overlayed in the map pane */}
+        <Header currentPosition={currentPosition} steps={steps} />
+
+        {/* Bottom bar (alert + recenter) inside the map pane */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: 20,
+            right: 20,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              backdropFilter: "blur(8px)",
+              background: "rgba(12, 18, 28, 0.55)",
+              border: "1px solid rgba(142, 195, 255, 0.18)",
+              padding: "12px 14px",
+              borderRadius: 12,
+              color: "#E8F1F8",
+              fontWeight: 700,
+              fontSize: 15,
+              letterSpacing: 0.2,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+              textAlign: "left",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              pointerEvents: "none",
+            }}
+            aria-live="polite"
+          >
+            {currentAlert || "All clear"}
+          </div>
+
+          <button
+            onClick={() => {
+              setFollowVehicle(true);
+              const pos = {
+                lat: currentPosition.latitude,
+                lng: currentPosition.longitude,
+              };
+              mapRef.current?.setCenter(pos);
+              mapRef.current?.panBy(0, 60);
+            }}
+            style={{
+              background: "#1E90FF",
+              color: "white",
+              border: "none",
+              padding: "10px 14px",
+              borderRadius: 10,
+              fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+              whiteSpace: "nowrap",
+              pointerEvents: "auto",
+            }}
+            aria-label="Recenter on vehicle"
+            title="Recenter on vehicle"
+          >
+            {followVehicle ? "Following…" : "Recenter"}
+          </button>
+        </div>
+      </div>
+
+      {/* RIGHT PANE: 3 stacked videos */}
+      <div
+        style={{
+          flex: "0 0 50%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          padding: 12,
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <HlsPlayer src={hls1} />
+        </div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <HlsPlayer src={hls2} />
+        </div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <HlsPlayer src={hls3} />
+        </div>
+      </div>
     </div>
-  )}
-  <CenterButton
-    label={followVehicle ? "Following…" : "Recenter"}
-    onClick={() => {
-      setFollowVehicle(true);
-      const pos = { lat: currentPosition.latitude, lng: currentPosition.longitude };
-      mapRef.current?.setCenter(pos);
-      mapRef.current?.panBy(0, 60);
-    }}
-    style={{
-      position: "absolute",
-      bottom: 20,
-      right: 20,
-      zIndex: 1001,
-    }}
-  />
-  </div>
   );
 }
