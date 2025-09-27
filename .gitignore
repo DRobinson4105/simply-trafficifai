@@ -1,1 +1,4 @@
 .env
+/node_modules
+/app/__pycache__
+.vscode
