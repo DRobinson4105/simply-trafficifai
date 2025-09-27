@@ -370,8 +370,8 @@ export default function HomeScreen() {
         <Polyline
           path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
           options={{
-            strokeColor: "#ffffffff",
-            strokeOpacity: 0.40,
+            strokeColor: "#fff7eeff",
+            strokeOpacity: 0.50,
             strokeWeight: 8,
           }}
         />
@@ -384,11 +384,11 @@ export default function HomeScreen() {
             typeof google !== "undefined"
               ? {
                   path: google.maps.SymbolPath.CIRCLE,
-                  scale: 8,
-                  fillColor: "#d5732dff",
+                  scale: 9,
+                  fillColor: "#ffffffff",
                   fillOpacity: 0.9,
-                  strokeColor: "#913000ff",
-                  strokeWeight: 2,
+                  strokeColor: "#ef641fff",
+                  strokeWeight: 3,
                 }
               : undefined
           }
