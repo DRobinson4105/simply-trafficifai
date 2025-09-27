@@ -1,5 +1,6 @@
 .env
 /node_modules
+traffic-sim-web-app/node_modules
 /server_file/api/__pycache__
 /server_file/api/venv
 .vscode

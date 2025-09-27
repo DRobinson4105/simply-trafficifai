@@ -5,18 +5,13 @@ import {
   Polyline,
   useJsApiLoader,
 } from "@react-google-maps/api";
-import route from "./route.json";
-import Header from "./header";
-import HlsPlayer from "./cam_view";
-import AlertBox from "./alertbox"
-import CenterButton from "./center-button";
+import route from "./map-routes/d_route.json";
+import Header from "./components/Header";
+import HlsPlayer from "./components/CamView";
+import AlertBox from "./components/AlertBox"
+import CenterButton from "./components/CenterButton";
 
-const GOOGLE_MAPS_API_KEY =
-  (typeof import.meta !== "undefined" &&
-    (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY) ||
-  (typeof process !== "undefined" &&
-    (process as any).env?.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) ||
-  "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
+const GOOGLE_MAPS_API_KEY = import.meta.env.GMAP_API_KEY as string;
 
 function distance(
   a: {latitude: number; longitude: number},

@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@mapbox/polyline": "^1.2.1",
-    "@react-google-maps/api": "^2.20.7",
-    "mapbox": "^1.0.0-beta10"
-  }
-}
