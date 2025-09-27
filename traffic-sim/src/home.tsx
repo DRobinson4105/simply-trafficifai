@@ -23,11 +23,96 @@ function distance(
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+// --- distance helpers for miles-left ---
+function toRad(d: number) { return (d * Math.PI) / 180; }
+
+function haversineMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
+  const R = 6371000; // meters
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLon = Math.sin(dLon / 2);
+  const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function metersToMiles(m: number) {
+  return m / 1609.344;
+}
+
+function projectOntoSegment(
+  pos: { latitude: number; longitude: number },
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }
+) {
+  // simple equirectangular meter scale around pos.lat
+  const mPerDegLat = 111320;
+  const mPerDegLon = 111320 * Math.cos(toRad(pos.latitude));
+
+  const ax = (a.longitude - pos.longitude) * mPerDegLon;
+  const ay = (a.latitude - pos.latitude) * mPerDegLat;
+  const bx = (b.longitude - pos.longitude) * mPerDegLon;
+  const by = (b.latitude - pos.latitude) * mPerDegLat;
+  const px = 0, py = 0; // pos is origin
+
+  const vx = bx - ax, vy = by - ay;
+  const wx = px - ax, wy = py - ay;
+
+  const vv = vx * vx + vy * vy;
+  let t = vv === 0 ? 0 : -(wx * vx + wy * vy) / vv;
+  t = Math.max(0, Math.min(1, t));
+
+  const projX = ax + t * vx;
+  const projY = ay + t * vy;
+
+  const projLon = projX / mPerDegLon + pos.longitude;
+  const projLat = projY / mPerDegLat + pos.latitude;
+
+  return { t, lat: projLat, lng: projLon };
+}
+
+function remainingMetersOnStep(step: google.maps.DirectionsStep, currentPosition: { latitude: number; longitude: number }) {
+  const path = (step.path as google.maps.LatLng[] | undefined) || [];
+  const end = step.end_location;
+
+  if (!path.length && end) {
+    return haversineMeters(currentPosition, { latitude: end.lat(), longitude: end.lng() });
+  }
+  if (path.length <= 1) return 0;
+
+  // Find nearest segment and projection
+  let best = { meters: Number.POSITIVE_INFINITY, seg: 0, t: 0, proj: { lat: path[0].lat(), lng: path[0].lng() } };
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = { latitude: path[i].lat(), longitude: path[i].lng() };
+    const b = { latitude: path[i + 1].lat(), longitude: path[i + 1].lng() };
+    const proj = projectOntoSegment(currentPosition, a, b);
+
+    const d = haversineMeters(currentPosition, { latitude: proj.lat, longitude: proj.lng });
+    if (d < best.meters) {
+      best = { meters: d, seg: i, t: proj.t, proj: { lat: proj.lat, lng: proj.lng } };
+    }
+  }
+
+  let remaining = 0;
+
+  const firstNext = { latitude: path[best.seg + 1].lat(), longitude: path[best.seg + 1].lng() };
+  remaining += haversineMeters({ latitude: best.proj.lat, longitude: best.proj.lng }, firstNext);
+
+  for (let j = best.seg + 1; j < path.length - 1; j++) {
+    const u = { latitude: path[j].lat(), longitude: path[j].lng() };
+    const v = { latitude: path[j + 1].lat(), longitude: path[j + 1].lng() };
+    remaining += haversineMeters(u, v);
+  }
+
+  return remaining;
+}
+
 function bearing(
   a: {latitude: number; longitude: number},
   b: {latitude: number; longitude: number}
 ) {
-  // Bearing in degrees from point a to b
   const lat1 = (a.latitude * Math.PI) / 180;
   const lat2 = (b.latitude * Math.PI) / 180;
   const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
@@ -35,74 +120,47 @@ function bearing(
   const x =
     Math.cos(lat1) * Math.sin(lat2) -
     Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  const brng = (Math.atan2(y, x) * 180) / Math.PI; // -180..+180
+  const brng = (Math.atan2(y, x) * 180) / Math.PI;
   return (brng + 360) % 360;
 }
 
 const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
-  // Base tones
   {elementType: "geometry", stylers: [{color: "#0b111b"}]},
   {elementType: "labels.text.fill", stylers: [{color: "#cfd7deff"}]},
   {elementType: "labels.text.stroke", stylers: [{color: "#0a0f18"}]},
-
-  // Hide clutter
   {featureType: "poi", stylers: [{visibility: "off"}]},
   {featureType: "transit", stylers: [{visibility: "off"}]},
   {featureType: "administrative", stylers: [{visibility: "off"}]},
-  {
-    featureType: "road",
-    elementType: "labels.icon",
-    stylers: [{visibility: "off"}],
-  },
-  {
-    featureType: "road.local",
-    elementType: "labels.text",
-    stylers: [{visibility: "off"}],
-  },
-
-  // Roads—simple but distinct
+  {featureType: "road", elementType: "labels.icon", stylers: [{visibility: "off"}]},
+  {featureType: "road.local", elementType: "labels.text", stylers: [{visibility: "off"}]},
   {featureType: "road", elementType: "geometry", stylers: [{color: "#1c2b45"}]},
-  {
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [{color: "#2a3038ff"}],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{color: "#415b7eff"}],
-  },
-  {
-    featureType: "road.highway.controlled_access",
-    elementType: "geometry",
-    stylers: [{color: "#3a71bf"}],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{color: "#e9e9eaff"}],
-  },
-
-  // Land + water
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{color: "#0e2438"}],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{color: "#7aa4c4"}],
-  },
+  {featureType: "road.arterial", elementType: "geometry", stylers: [{color: "#2a3038ff"}]},
+  {featureType: "road.highway", elementType: "geometry", stylers: [{color: "#415b7eff"}]},
+  {featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{color: "#3a71bf"}]},
+  {featureType: "road", elementType: "labels.text.fill", stylers: [{color: "#e9e9eaff"}]},
+  {featureType: "water", elementType: "geometry", stylers: [{color: "#0e2438"}]},
+  {featureType: "water", elementType: "labels.text.fill", stylers: [{color: "#7aa4c4"}]},
 ];
 
 // Types
 export type LatLng = {latitude: number; longitude: number};
-
 type Alert = {startIndex: number; endIndex: number; info: string};
 
+function maneuverIcon(m?: string | null) {
+  switch (m) {
+    case "turn-left": return "⬅️";
+    case "turn-right": return "➡️";
+    case "keep-left": return "↖️";
+    case "keep-right": return "↗️";
+    case "merge": return "🛣️";
+    case "roundabout-left":
+    case "roundabout-right": return "🛑";
+    case "straight": return "⬆️";
+    default: return "➡️";
+  }
+}
+
 export default function HomeScreen() {
-  // ---- demo alerts ----
   const alerts = useMemo<Alert[]>(
     () => [
       {startIndex: 20, endIndex: 40, info: "Lane 2: 45 mph"},
@@ -112,7 +170,6 @@ export default function HomeScreen() {
     []
   );
 
-  // ---- precompute distances and total length ----
   const distances = useMemo(
     () =>
       route.map((p: LatLng, i: number) =>
@@ -125,15 +182,15 @@ export default function HomeScreen() {
     [distances]
   );
 
-  // ---- state ----
   const [currentPosition, setCurrentPosition] = useState<LatLng>(route[0]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentAlert, setCurrentAlert] = useState<string | null>(null);
   const [followVehicle, setFollowVehicle] = useState(true);
-  const [speed] = useState(0.00003); // tweak for faster/smoother movement
+  const [speed] = useState(0.00003);
   const maxSpeed = 0.00003;
 
-  // ---- refs ----
+  const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
+
   const mapRef = useRef<google.maps.Map | null>(null);
   const lastAlertMessageRef = useRef<string | null>(null);
   const followRef = useRef(true);
@@ -148,9 +205,50 @@ export default function HomeScreen() {
   const {isLoaded} = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     id: "google-map-script",
+    version: "weekly",
+    language: "en",
+    region: "US",
+    libraries: ["maps"],
   });
 
-  // ---- animation loop ----
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const svc = new google.maps.DirectionsService();
+    const origin = new google.maps.LatLng(route[0].latitude, route[0].longitude);
+    const destination = new google.maps.LatLng(
+      route[route.length - 1].latitude,
+      route[route.length - 1].longitude
+    );
+
+    const N = 40;
+    const sampled = route.filter((_, i) => i % N === 0).slice(1, -1);
+    const waypoints = sampled.map((p) => ({
+      location: new google.maps.LatLng(p.latitude, p.longitude),
+      stopover: false,
+    }));
+
+    svc.route(
+      {
+        origin,
+        destination,
+        waypoints,
+        optimizeWaypoints: false,
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: false,
+      },
+      (res, status) => {
+        if (status === google.maps.DirectionsStatus.OK && res && res.routes[0]) {
+          const flat = res.routes[0].legs?.flatMap((l) => l.steps ?? []) ?? [];
+          setSteps(flat);
+        } else {
+          console.warn("Directions request failed:", status);
+          setSteps([]);
+        }
+      }
+    );
+  }, [isLoaded]);
+
   useEffect(() => {
     if (!isLoaded) return;
     let progressLocal = 0;
@@ -185,12 +283,10 @@ export default function HomeScreen() {
           setCurrentPosition(newPos);
           setCurrentIndex(i);
 
-          // follow camera (only if follow mode is on)
           if (followRef.current && mapRef.current) {
             mapRef.current.setCenter({lat, lng});
           }
 
-          // alerts
           const activeAlert = alerts.find(
             (a) => i >= a.startIndex && i <= a.endIndex
           );
@@ -218,32 +314,61 @@ export default function HomeScreen() {
     return () => cancelAnimationFrame(frameId);
   }, [isLoaded, speed, alerts, distances, totalDistance]);
 
-  if (!isLoaded) return <div>Loading map...</div>;
+const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
+const prev = route[idx - 1];
+const next = route[idx];
+const headingDeg = prev && next ? bearing(prev, next) : 0;
 
-  // ---- compute heading for vehicle icon rotation ----
-  const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
-  const prev = route[idx - 1];
-  const next = route[idx];
-  const headingDeg = prev && next ? bearing(prev, next) : 0;
+const nextStep = useMemo(() => {
+  if (!steps || steps.length === 0) return null;
 
-  // ---- render ----
-  return (
-    <div style={{width: "100vw", height: "100vh", position: "relative"}}>
+  let best: { s: google.maps.DirectionsStep; d: number } | null = null;
+
+  for (const s of steps) {
+    let d = Number.POSITIVE_INFINITY;
+    if (s.end_location) {
+      d = distance(
+        currentPosition,
+        { latitude: s.end_location.lat(), longitude: s.end_location.lng() }
+      );
+    } else if (s.path && s.path.length) {
+      for (const pt of s.path) {
+        const dd = distance(
+          currentPosition,
+          { latitude: pt.lat(), longitude: pt.lng() }
+        );
+        if (dd < d) d = dd;
+      }
+    }
+    if (!best || d < best.d) best = { s, d };
+  }
+  return best?.s ?? null;
+}, [currentPosition, steps]);
+
+const milesLeft = useMemo(() => {
+  if (!nextStep) return null;
+  try {
+    const meters = remainingMetersOnStep(nextStep, currentPosition);
+    return metersToMiles(meters);
+  } catch {
+    // last-resort fallback: total step length from API
+    const fallbackMeters = nextStep.distance?.value ?? 0;
+    return metersToMiles(fallbackMeters);
+  }
+}, [nextStep, currentPosition]);
+
+return (
+  <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    {isLoaded ? (
       <GoogleMap
-        mapContainerStyle={{width: "100%", height: "100%"}}
+        mapContainerStyle={{ width: "100%", height: "100%" }}
         zoom={15}
         onLoad={(map) => {
           mapRef.current = map;
-          map.setCenter(startLatLng); // initial center
-          // Offset the camera down a bit so the car sits above the bottom banner
-          // (no MapOptions.padding in JS API)
+          map.setCenter({ lat: route[0].latitude, lng: route[0].longitude });
           map.panBy(0, 60);
-
-          // stop following only on **user drag**
           map.addListener("dragstart", () => setFollowVehicle(false));
-
-          // If you also want zoom to stop following, use these — but guard initial fires:
-          const ignoredFirstZoom = {current: false} as {current: boolean};
+          const ignoredFirstZoom = { current: false } as { current: boolean };
           map.addListener("zoom_changed", () => {
             if (!ignoredFirstZoom.current) {
               ignoredFirstZoom.current = true;
@@ -252,9 +377,7 @@ export default function HomeScreen() {
             setFollowVehicle(false);
           });
         }}
-        onUnmount={() => {
-          mapRef.current = null;
-        }}
+        onUnmount={() => { mapRef.current = null; }}
         options={{
           disableDefaultUI: true,
           draggable: true,
@@ -264,7 +387,6 @@ export default function HomeScreen() {
           backgroundColor: "#0b111b",
         }}
       >
-        {/* Route base (darker trail) */}
         <Polyline
           path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
           options={{
@@ -273,7 +395,6 @@ export default function HomeScreen() {
             strokeWeight: 14,
           }}
         />
-        {/* Route top line (dark, crisp) */}
         <Polyline
           path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
           options={{
@@ -282,8 +403,6 @@ export default function HomeScreen() {
             strokeWeight: 6,
           }}
         />
-
-        {/* Start marker */}
         <Marker
           position={{lat: route[0].latitude, lng: route[0].longitude}}
           title="Start"
@@ -300,7 +419,6 @@ export default function HomeScreen() {
               : undefined
           }
         />
-        {/* End marker */}
         <Marker
           position={{
             lat: route[route.length - 1].latitude,
@@ -320,9 +438,6 @@ export default function HomeScreen() {
               : undefined
           }
         />
-
-        {/* Vehicle marker with heading */}
-        {/* Vehicle halo (filled circle under arrow) */}
         <Marker
           position={{
             lat: currentPosition.latitude,
@@ -378,60 +493,62 @@ export default function HomeScreen() {
           }
         />
       </GoogleMap>
+    ) : (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "grid",
+          placeItems: "center",
+          color: "#E8F1F8",
+          background: "#0b111b",
+        }}
+      >
+        Loading map…
+      </div>
+    )}
 
-      {/* Alert banner */}
+    {nextStep && (
       <div
         style={{
           position: "absolute",
-          bottom: 76,
-          left: 20,
-          right: 100,
-          backdropFilter: "blur(8px)",
-          background: "rgba(12, 18, 28, 0.55)",
-          border: "1px solid rgba(142, 195, 255, 0.18)",
-          padding: "14px 16px",
+          top: 12,
+          left: 12,
+          right: 12,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 14px",
           borderRadius: 12,
+          backdropFilter: "blur(8px)",
+          background: "rgba(12, 18, 28, 0.65)",
+          border: "1px solid rgba(142, 195, 255, 0.18)",
           color: "#E8F1F8",
           fontWeight: 700,
           fontSize: 15,
-          letterSpacing: 0.2,
           pointerEvents: "none",
           boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-          textAlign: "center",
         }}
+        aria-live="polite"
       >
-        {currentAlert || "All clear"}
+        <span style={{ fontSize: 18 }}>{maneuverIcon(nextStep.maneuver)}</span>
+        <span dangerouslySetInnerHTML={{ __html: nextStep.instructions ?? "" }} />
+        {typeof milesLeft === "number" && (
+          <span
+            style={{
+              marginLeft: "auto",
+              padding: "4px 8px",
+              borderRadius: 999,
+              background: "rgba(24, 118, 211, 0.25)",
+              border: "1px solid rgba(24,118,211,0.5)",
+              fontWeight: 800,
+            }}
+          >
+            {milesLeft < 0.1 ? `${(milesLeft * 5280).toFixed(0)} ft` : `${milesLeft.toFixed(2)} mi`}
+          </span>
+        )}
       </div>
-
-      {/* Recenter / Follow button */}
-      <button
-        onClick={() => {
-          setFollowVehicle(true);
-          const pos = {
-            lat: currentPosition.latitude,
-            lng: currentPosition.longitude,
-          };
-          mapRef.current?.setCenter(pos);
-          mapRef.current?.panBy(0, 60);
-        }}
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          background: "#1E90FF",
-          color: "white",
-          border: "none",
-          padding: "10px 14px",
-          borderRadius: 10,
-          fontWeight: 700,
-          cursor: "pointer",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-        }}
-        aria-label="Recenter on vehicle"
-        title="Recenter on vehicle"
-      >
-        {followVehicle ? "Following…" : "Recenter"}
-      </button>
-    </div>
-  );
+    )}
+  </div>
+);
 }
