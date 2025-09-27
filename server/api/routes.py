@@ -1,14 +1,14 @@
 from flask import Blueprint, jsonify
+import json
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
+def get3NearestCameras(latitude, longitude):
+    with open('data.json', 'r') as f:
+        data = json.load(f)
 
-@api_bp.route("/test")
-def test():
-    return jsonify(message="Hello from API!")
+    for camera in data["cameras"]:
 
+@api_bp.route("/api")
+    # return ...
 
-# Add more API endpoints here, e.g.:
-@api_bp.route("/foo")
-def foo():
-    return jsonify(foo="bar")

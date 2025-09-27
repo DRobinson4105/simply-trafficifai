@@ -1,44 +1,46 @@
-[
+{
+  "cameras": [
   {
-    "sr-408-mm-3.40": {
-      "latitude":  28.548902,
-      "longitude": -81.484574
-    },
-    "sr-408-mm-3.90": {
-      "latitude":  28.548242,
-      "longitude": -81.476730
-    },
-    "sr-408-mm-4.00": {
-      "latitude":  28.548574,
-      "longitude": -81.475104
-    },
-    "sr-408-mm-4.30": {
-      "latitude":  28.548840,
-      "longitude": -81.469215
-    },
-    "sr-408-mm-5.1": {
-      "latitude":  28.548690,
-      "longitude": -81.456763
-    },
-    "sr-408-mm-5.6": {
-      "latitude":  28.548069,
-      "longitude": -81.447208
-    },
-    "sr-408-mm-6.0": {
-      "latitude":  28.548017,
-      "longitude": -81.442392
-    },
-    "sr-408-mm-6.3": {
-      "latitude":  28.548046,
-      "longitude": -81.436823
-    },
-    "sr-408-mm-6.7": {
-      "latitude":  28.545955,
-      "longitude": -81.430452
-    },
-    "sr-408-mm-8.5": {
-      "latitude":  28.543007,
-      "longitude": -81.414545
-    }
+  "sr-408-mm-3.40": {
+    "latitude":  28.548902,
+    "longitude": -81.484574
+  },
+  "sr-408-mm-3.90": {
+    "latitude":  28.548242,
+    "longitude": -81.476730
+  },
+  "sr-408-mm-4.00": {
+    "latitude":  28.548574,
+    "longitude": -81.475104
+  },
+  "sr-408-mm-4.30": {
+    "latitude":  28.548840,
+    "longitude": -81.469215
+  },
+  "sr-408-mm-5.1": {
+    "latitude":  28.548690,
+    "longitude": -81.456763
+  },
+  "sr-408-mm-5.6": {
+    "latitude":  28.548069,
+    "longitude": -81.447208
+  },
+  "sr-408-mm-6.0": {
+    "latitude":  28.548017,
+    "longitude": -81.442392
+  },
+  "sr-408-mm-6.3": {
+    "latitude":  28.548046,
+    "longitude": -81.436823
+  },
+  "sr-408-mm-6.7": {
+    "latitude":  28.545955,
+    "longitude": -81.430452
+  },
+  "sr-408-mm-8.5": {
+    "latitude":  28.543007,
+    "longitude": -81.414545
+  }
   }
 ]
+}
