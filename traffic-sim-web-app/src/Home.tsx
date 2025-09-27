@@ -321,7 +321,10 @@ useEffect(() => {
   const animate = () => {
     const step = Math.min(speed, maxSpeed);
     progressLocal.current += step;
-    if (progressLocal.current > totalDistance) progressLocal.current = 0;
+    if (progressLocal.current >= totalDistance) {
+      setPlaying(false); // <-- pause when at end
+      return; // <-- exit animation, don't update position, don't call RAF again
+    }
 
     let traveled = 0;
     for (let i = 1; i < route.length; i++) {
