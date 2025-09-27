@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Lane, laneArrowDataUrl } from "./Lane"
 
 export type LatLng = { latitude: number; longitude: number };
 
@@ -154,24 +155,59 @@ function ManeuverIcon({ maneuver }: { maneuver?: string | null }) {
 
 export default function Header({ currentPosition, steps, className, style }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
+  const [lanes, setLanes] = useState<boolean[]>([]);
 
   useEffect(() => {
     setStepIdx(0);
   }, [steps]);
 
   useEffect(() => {
+     async function fetchLanes() {
+      try {
+        const res = await fetch("/api/get-optimal-lanes", { method: "GET" });
+        const json = await res.json();
+
+        const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
+        if (Array.isArray(arr)) {
+          setLanes(arr.map(Boolean));
+        }
+      } catch {
+        console.error("Error fetching lane data\n");
+      }
+    }
+
+    fetchLanes();
+    }, []);
+
+  const didMountRef = React.useRef(false);
+
+  useEffect(() => {
     if (!steps?.length) return;
 
     const SWITCH_AT_M = 12;
+
     let nextIdx = Math.min(stepIdx, steps.length - 1);
     let rem = remainingMetersOnStep(steps[nextIdx], currentPosition);
-
     while (rem < SWITCH_AT_M && nextIdx < steps.length - 1) {
       nextIdx += 1;
       rem = remainingMetersOnStep(steps[nextIdx], currentPosition);
     }
 
-    if (nextIdx !== stepIdx) setStepIdx(nextIdx);
+    const advanced = nextIdx !== stepIdx;
+    if (advanced) {
+      if (didMountRef.current) {
+        const qs = new URLSearchParams({
+          lat: currentPosition.latitude.toFixed(6),
+          lng: currentPosition.longitude.toFixed(6),
+        });
+        fetch(`/api/update?${qs.toString()}`, { method: "PUT", keepalive: true })
+          .catch(() => {});
+      } else {
+        didMountRef.current = true;
+      }
+
+      setStepIdx(nextIdx);
+    }
   }, [currentPosition, steps, stepIdx]);
 
   const currentStep =
@@ -223,6 +259,30 @@ export default function Header({ currentPosition, steps, className, style }: Pro
           __html: currentStep.instructions ?? "",
         }}
       />
+
+      {!!lanes.length && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginLeft: 8,
+            pointerEvents: "none",
+          }}
+          aria-label="Lane status"
+        >
+          {lanes.map((blocked, i) => (
+            <img
+              key={i}
+              src={laneArrowDataUrl(blocked, 18)}
+              width={18}
+              height={18}
+              alt={blocked ? "Lane blocked" : "Lane open"}
+              style={{ display: "block" }}
+            />
+          ))}
+        </div>
+      )}
 
       {typeof milesLeft === "number" && (
         <span

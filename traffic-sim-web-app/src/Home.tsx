@@ -10,6 +10,7 @@ import Header from "./components/Header";
 import MjpegView from "./components/MjpegView";
 import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
+import { Lane } from "./components/Lane"
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
 
