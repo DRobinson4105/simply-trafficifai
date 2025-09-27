@@ -1,4 +1,5 @@
 .env
 /node_modules
-/app/__pycache__
+/api/__pycache__
 .vscode
+venv
