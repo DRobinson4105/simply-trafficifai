@@ -218,7 +218,6 @@ export default function Header({ currentPosition, steps, className, style }: Pro
     >
       <ManeuverIcon maneuver={currentStep.maneuver} />
 
-      {/* DirectionsStep.instructions is HTML */}
       <span
         dangerouslySetInnerHTML={{
           __html: currentStep.instructions ?? "",
