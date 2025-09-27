@@ -9,7 +9,6 @@ function distance(a: { latitude: number; longitude: number }, b: { latitude: num
 }
 
 export default function HomeScreen() {
-  // Alerts (memoized)
   const alerts = useMemo(() => [
     { startIndex: 20, endIndex: 40, info: "Lane 2: 45 mph" },
     { startIndex: 80, endIndex: 130, info: "Construction ahead in Lane 1" },
@@ -21,13 +20,16 @@ export default function HomeScreen() {
 
   const [currentPosition, setCurrentPosition] = useState(route[0]);
   const [currentAlert, setCurrentAlert] = useState<string | null>(null);
-  const [speed] = useState(0.00003); // increase for smoother/faster movement
+  const [speed] = useState(0.00003);
   const maxSpeed = 0.00003;
 
   const lastAlertMessageRef = useRef<string | null>(null);
 
-  // Load Google Maps
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I" });
+  // --- map follow ---
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const [followCar, setFollowCar] = useState(true);
+
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY" });
 
   useEffect(() => {
     let progressLocal = 0;
@@ -36,7 +38,7 @@ export default function HomeScreen() {
     const speak = (msg: string) => {
       if ("speechSynthesis" in window) {
         const utter = new SpeechSynthesisUtterance(msg);
-        window.speechSynthesis.cancel(); // stop overlapping speech
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utter);
       }
     };
@@ -56,7 +58,7 @@ export default function HomeScreen() {
           const newPos = { latitude: lat, longitude: lng };
           setCurrentPosition(newPos);
 
-          // Alerts
+          // alerts
           const activeAlert = alerts.find(a => i >= a.startIndex && i <= a.endIndex);
           if (activeAlert) {
             if (lastAlertMessageRef.current !== activeAlert.info) {
@@ -70,6 +72,11 @@ export default function HomeScreen() {
             lastAlertMessageRef.current = null;
           }
 
+          // move camera if following
+          if (followCar && mapRef.current) {
+            mapRef.current.panTo({ lat, lng });
+          }
+
           break;
         }
         traveled += segDist;
@@ -80,7 +87,7 @@ export default function HomeScreen() {
 
     frameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frameId);
-  }, [speed, alerts, distances, totalDistance]);
+  }, [speed, alerts, distances, totalDistance, followCar]);
 
   if (!isLoaded) return <div>Loading map...</div>;
 
@@ -90,9 +97,11 @@ export default function HomeScreen() {
         mapContainerStyle={{ width: "100%", height: "100%" }}
         center={{ lat: route[0].latitude, lng: route[0].longitude }}
         zoom={15}
+        onLoad={map => { mapRef.current = map; }}
+        onDragStart={() => setFollowCar(false)} // stop following if user drags map
         options={{
-          disableDefaultUI: true,  // removes all buttons
-          draggable: true,          // set false if you want map fixed
+          disableDefaultUI: true,
+          draggable: true,
           styles: [
             { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
             { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
@@ -110,13 +119,14 @@ export default function HomeScreen() {
         <Marker position={{ lat: currentPosition.latitude, lng: currentPosition.longitude }} label="🚗" />
       </GoogleMap>
 
+      {/* Alerts Widget */}
       <div
         style={{
           position: "absolute",
-          bottom: "40px",
+          bottom: "80px",
           left: "20px",
           right: "20px",
-          backgroundColor: "rgba(30, 30, 30, 0.8)",
+          backgroundColor: "rgba(30,30,30,0.8)",
           padding: "15px",
           borderRadius: "12px",
           textAlign: "center",
@@ -127,6 +137,30 @@ export default function HomeScreen() {
       >
         {currentAlert || "All clear"}
       </div>
+
+      {/* Recenter Button */}
+      <button
+        onClick={() => {
+          if (mapRef.current) {
+            mapRef.current.panTo({ lat: currentPosition.latitude, lng: currentPosition.longitude });
+            setFollowCar(true);
+          }
+        }}
+        style={{
+          position: "absolute",
+          bottom: "20px",
+          right: "20px",
+          padding: "10px 15px",
+          borderRadius: "8px",
+          backgroundColor: "#1E90FF",
+          color: "white",
+          fontWeight: "bold",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Recenter
+      </button>
     </div>
   );
 }
