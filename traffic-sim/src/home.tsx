@@ -253,11 +253,21 @@ export default function HomeScreen() {
   });
 
   // ---- animation loop ----
-  useEffect(() => {
-    if (!isLoaded) return;
-    let progressLocal = 0;
-    let frameId = 0;
 
+const [playing, setPlaying] = useState(false);
+const progressLocal = useRef<number>(0);
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === 'Space') setPlaying((p) => !p);
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
+
+useEffect(() => {
+  if (!isLoaded || !playing) return;
+
+  let frameId = 0;
     const speak = (msg: string) => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         const utter = new SpeechSynthesisUtterance(msg);
@@ -268,14 +278,14 @@ export default function HomeScreen() {
 
     const animate = () => {
       const step = Math.min(speed, maxSpeed);
-      progressLocal += step;
-      if (progressLocal > totalDistance) progressLocal = 0;
+      progressLocal.current += step;
+      if (progressLocal.current > totalDistance) progressLocal.current = 0;
 
       let traveled = 0;
       for (let i = 1; i < route.length; i++) {
         const segDist = distances[i];
-        if (traveled + segDist >= progressLocal) {
-          const frac = (progressLocal - traveled) / segDist;
+        if (traveled + segDist >= progressLocal.current) {
+          const frac = (progressLocal.current - traveled) / segDist;
           const lat =
             route[i - 1].latitude +
             frac * (route[i].latitude - route[i - 1].latitude);
@@ -318,7 +328,7 @@ export default function HomeScreen() {
 
     frameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frameId);
-  }, [isLoaded, speed, alerts, distances, totalDistance]);
+  }, [isLoaded, playing, speed, route, distances, totalDistance, maxSpeed]);
 
   if (!isLoaded) return <div>Loading map...</div>;
 
