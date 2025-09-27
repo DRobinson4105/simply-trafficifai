@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, Response
+import time
 from flask_cors import CORS
 import json
 import cv2
@@ -23,18 +24,55 @@ def build_path(route, eps=1e-2):
             used_cameras.add(closest)
             cameras.put(closest)
 
-def webcam():
-    camera = cv2.VideoCapture("vid_s.mp4")
 
-    while True:
-        success, frame = camera.read()
-        if success:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        else:
-            camera.release()
+
+def webcam(path="vid.mp4", loop=True, jpeg_quality=80):
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        raise RuntimeError(f"Cannot open video: {path}")
+
+    # FPS can be 0 or NaN for some files—fallback to 30
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    if fps <= 0:
+        fps = 30.0
+    frame_duration = 1.0 / fps
+    next_frame_time = time.perf_counter()
+
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                if loop:
+                    # rewind to frame 0 and continue
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    continue
+                else:
+                    break
+
+            ok, buffer = cv2.imencode(
+                ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)]
+            )
+            if not ok:
+                continue
+
+            # Send one frame
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n"
+            )
+
+            # Pace to the source FPS (skip ahead if we fell behind)
+            next_frame_time += frame_duration
+            sleep_for = next_frame_time - time.perf_counter()
+            if sleep_for > 0:
+                time.sleep(sleep_for)
+            else:
+                # we're behind; catch up without sleeping
+                while next_frame_time < time.perf_counter():
+                    next_frame_time += frame_duration
+    finally:
+        cap.release()
+
 
 @app.route('/camera1', methods=['GET'])
 def webcam_display():
