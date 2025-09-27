@@ -10,7 +10,6 @@ import Header from "./components/Header";
 import MjpegView from "./components/MjpegView";
 import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
-import { Lane } from "./components/Lane"
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
 
@@ -249,6 +248,27 @@ export default function HomeScreen() {
     region: "US",
     libraries: ["maps"],
   });
+
+  // Fire the POST exactly once (even in React 18 StrictMode dev)
+  const didBootPostRef = useRef(false);
+
+  useEffect(() => {
+    if (didBootPostRef.current) return;
+    didBootPostRef.current = true;
+
+    (async () => {
+      try {
+        await fetch('api/build-path', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(route),
+          keepalive: true,
+        });
+      } catch (err) {
+        console.warn("Startup POST failed:", err);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
