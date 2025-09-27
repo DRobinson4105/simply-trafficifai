@@ -1,7 +1,7 @@
 import polyline from '@mapbox/polyline';
 const apiKey = 'AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I';
-const origin = '25.758209, -80.373659';
-const destination = '25.479467, -80.427881';
+const origin = '28.546575, -81.501180';
+const destination = '28.530962, -81.405172';
 import fs from 'fs';
 async function getRoute() {
   const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${apiKey}`;
