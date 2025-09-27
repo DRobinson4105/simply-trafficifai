@@ -370,18 +370,9 @@ export default function HomeScreen() {
         <Polyline
           path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
           options={{
-            strokeColor: "#ff8b38ff",
-            strokeOpacity: 0.60,
+            strokeColor: "#ffffffff",
+            strokeOpacity: 0.40,
             strokeWeight: 8,
-          }}
-        />
-        {/* Route top line (dark, crisp) */}
-        <Polyline
-          path={route.map((p: LatLng) => ({lat: p.latitude, lng: p.longitude}))}
-          options={{
-            strokeColor: "#913000ff",
-            strokeOpacity: 0.95,
-            strokeWeight: 3,
           }}
         />
 
