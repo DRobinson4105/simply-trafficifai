@@ -162,17 +162,9 @@ export default function HomeScreen() {
 
   const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
 
-  // NEW: three HLS slots (wire these to your backend response)
   const [hls1, setHls1] = useState<string | undefined>(undefined);
   const [hls2, setHls2] = useState<string | undefined>(undefined);
   const [hls3, setHls3] = useState<string | undefined>(undefined);
-
-  // // Optional: quick test streams
-  // useEffect(() => {
-  //   setHls1("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
-  //   setHls2("https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8");
-  //   setHls3("https://mojen.se/live/cdn/playlist.m3u8");
-  // }, []);
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const lastAlertMessageRef = useRef<string | null>(null);
