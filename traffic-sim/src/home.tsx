@@ -436,9 +436,9 @@ export default function HomeScreen() {
               ? {
                   path: google.maps.SymbolPath.CIRCLE,
                   scale: 18,
-                  fillColor: "#ffffff",
+                  fillColor: "#77c0e7ff",
                   fillOpacity: 1,
-                  strokeColor: "#1876d3ff",
+                  strokeColor: "#000000ff",
                   strokeOpacity: 1,
                   strokeWeight: 2,
                   anchor: new google.maps.Point(0, 0),
@@ -464,10 +464,10 @@ export default function HomeScreen() {
               ? {
                   path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
                   scale: 5,
-                  fillColor: "#1c81e6ff",
+                  fillColor: "#ffffffff",
                   fillOpacity: 1,
-                  strokeColor: "#1c81e6ff",
-                  strokeWeight: 1,
+                  strokeColor: "#000000ff",
+                  strokeWeight: 2,
                   rotation: headingDeg,
                   anchor: new google.maps.Point(0, 2.5),
                 }
