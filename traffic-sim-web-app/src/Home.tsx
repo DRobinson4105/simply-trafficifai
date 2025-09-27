@@ -11,7 +11,7 @@ import HlsPlayer from "./components/CamView";
 import AlertBox from "./components/AlertBox"
 import CenterButton from "./components/CenterButton";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.GMAP_API_KEY as string;
+const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
 
 function distance(
   a: {latitude: number; longitude: number},

@@ -1,7 +1,6 @@
 /// <reference types="react-scripts" />
 interface ImportMetaEnv {
-  readonly GMAP_API_KEY: string
-  // add more VITE_ keys here if needed
+  readonly VITE_GOOGLE_MAPS_API_KEY: string
 }
 
 interface ImportMeta {
