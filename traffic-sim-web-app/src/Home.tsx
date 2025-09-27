@@ -59,7 +59,7 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
     stylers: [{visibility: "off"}],
   },
 
-  // Roads—simple but distinct
+  // Roads—simle but distinct
   {
     featureType: "all",
     elementType: "labels.text.fill",

@@ -16,7 +16,7 @@ export default function MjpegView({ src, style }: Props) {
         width: "100%",
         height: "100%",
         objectFit: "cover",
-        borderRadius: 10,
+        borderRadius: 11,
         ...style,
       }}
       draggable={false}
