@@ -81,6 +81,12 @@ export default function Header({
 		}
 
 		const advanced = nextIdx !== stepIdx;
+	
+        fetch('http://localhost:5001/api/update', {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({"latitude": currentPosition.latitude.toFixed(6), "longitude": currentPosition.longitude.toFixed(6)})
+        });
 		if (advanced) {
 			setStepIdx(nextIdx);
 		}
