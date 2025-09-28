@@ -8,7 +8,7 @@ export type Lane = {
 };
 
 export function laneArrowDataUrl(blocked: boolean, size = 24): string {
-  const fill = blocked ? "#9AA3AD" : "#FFFFFF";
+  const fill = !blocked ? "#9AA3AD" : "#FFFFFF";
   const svg = `
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size + 2} ${size + 2}' width='${size}' height='${size}' fill='${fill}'>
       <path d='M12 3l5 5h-3v13h-4V8H7l5-5z'/>

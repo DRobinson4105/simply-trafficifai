@@ -10,56 +10,16 @@ type Props = {
 
 export default function AlertBox({
   text,
-  pollMs = 5000,
   className,
   style,
 }: Props) {
-  const [serverText, setServerText] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (text !== undefined) {
-      setServerText(null);
-      return;
-    }
-    let cancelled = false;
-    const ac = new AbortController();
-
-    async function load() {
-      try {
-        const res = await fetch("http://localhost:5001/api/get-alert", { method: "GET", signal: ac.signal });
-        const json = await res.json();
-
-        let value: string | null = null;
-        if (typeof json === "string") value = json;
-        else if (json && "currentAlert" in json) value = json.currentAlert;
-        else if (json && "alert" in json) value = json.alert;
-
-        if (!cancelled) setServerText(value ?? null);
-      } catch {
-        if (!cancelled) setServerText(null);
-      }
-    }
-
-    load();
-    const id = pollMs > 0 ? setInterval(load, pollMs) : null;
-    return () => {
-      cancelled = true;
-      ac.abort();
-      if (id) clearInterval(id);
-    };
-  }, [text, pollMs]);
-
-  const value = text === undefined ? serverText : text;
-
-  if (value == null || String(value).trim() === "") return null;
-
   return (
     <div
       className={className}
       style={{
         backdropFilter: "blur(8px)",
-        background: "rgba(12, 18, 28, 0.55)",
-        border: "1px solid rgba(142, 195, 255, 0.18)",
+        background: "rgba(220, 38, 38, 0.80)",
+        border: "1px solid rgba(255, 99, 99, 0.5)",
         padding: "12px 14px",
         borderRadius: 12,
         color: "#E8F1F8",
@@ -67,7 +27,7 @@ export default function AlertBox({
         fontSize: 15,
         letterSpacing: 0.2,
         boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-        textAlign: "left",
+        textAlign: "center",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
@@ -77,7 +37,7 @@ export default function AlertBox({
       aria-live="polite"
       role="status"
     >
-      {String(value)}
+      {String(text)}
     </div>
   );
 }

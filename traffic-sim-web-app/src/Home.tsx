@@ -10,8 +10,9 @@ import Header from "./components/Header";
 import MjpegView from "./components/MjpegView";
 import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
+import { AlertPoller, Speak} from "./utils/AlertPoller"
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
+const GOOGLE_MAPS_API_KEY = process.env.GMAPS_API_KEY || "";
 
 function distance(
   a: {latitude: number; longitude: number},
@@ -223,7 +224,6 @@ export default function HomeScreen() {
 
   const [currentPosition, setCurrentPosition] = useState<LatLng>(route[0]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentAlert, setCurrentAlert] = useState<string | null>(null);
   const [followVehicle, setFollowVehicle] = useState(true);
   const [speed] = useState(0.00003);
   const maxSpeed = 0.00003;
@@ -231,14 +231,8 @@ export default function HomeScreen() {
   const [steps, setSteps] = useState<Array<google.maps.DirectionsStep>>([]);
 
   const mapRef = useRef<google.maps.Map | null>(null);
-  const lastAlertMessageRef = useRef<string | null>(null);
   const followRef = useRef(true);
   followRef.current = followVehicle;
-
-  const startLatLng = useMemo(
-    () => ({lat: route[0].latitude, lng: route[0].longitude}),
-    []
-  );
 
   const {isLoaded} = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -248,6 +242,12 @@ export default function HomeScreen() {
     region: "US",
     libraries: ["maps"],
   });
+
+  const currentAlert = AlertPoller(6000, false);
+  useEffect(() =>
+  {
+    if (currentAlert) Speak(currentAlert);
+  }, [currentAlert]);
 
   const didBootPostRef = useRef(false);
 
@@ -349,13 +349,6 @@ useEffect(() => {
   })();
 
   let frameId = 0;
-  const speak = (msg: string) => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      const utter = new SpeechSynthesisUtterance(msg);
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    }
-  };
 
   const animate = () => {
     const step = Math.min(speed, maxSpeed);
@@ -385,24 +378,7 @@ useEffect(() => {
         if (followRef.current && mapRef.current) {
           mapRef.current.setCenter({ lat, lng });
         }
-
-        // Alert logic
-        const activeAlert = alerts.find(
-          (a) => i >= a.startIndex && i <= a.endIndex
-        );
-        if (activeAlert) {
-          if (lastAlertMessageRef.current !== activeAlert.info) {
-            setCurrentAlert(activeAlert.info);
-            speak(activeAlert.info);
-            lastAlertMessageRef.current = activeAlert.info;
-          }
-        } else if (lastAlertMessageRef.current !== null) {
-          setCurrentAlert(null);
-          speak("All clear");
-          lastAlertMessageRef.current = null;
-        }
-
-        break; // <---- do not forget this!
+        break;
       }
       traveled += segDist;
     }
@@ -413,7 +389,6 @@ useEffect(() => {
   frameId = requestAnimationFrame(animate);
   return () => cancelAnimationFrame(frameId);
 
-  // Don't forget to include all needed dependencies!
 }, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance, alerts]);
   const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
   const prev = route[idx - 1];
@@ -594,7 +569,7 @@ useEffect(() => {
               pointerEvents: "none",
             }}
           >
-            <AlertBox text={currentAlert} />
+            <AlertBox text={currentAlert}/>
           </div>
         )}
         <CenterButton

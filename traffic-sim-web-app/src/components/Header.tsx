@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Lane, laneArrowDataUrl } from "./Lane";
+import { useEffect, useMemo, useState } from "react";
+import { laneArrowDataUrl } from "./Lane";
 import { Props, metersToMiles, remainingMetersOnStep } from "../utils/MathUtils"
 
 function ManeuverIcon({ maneuver }: { maneuver?: string | null }) {
@@ -81,7 +81,7 @@ export default function Header({
 		}
 
 		const advanced = nextIdx !== stepIdx;
-	
+
         fetch('http://localhost:5001/api/update', {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
