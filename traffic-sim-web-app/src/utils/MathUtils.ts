@@ -4,6 +4,7 @@ export type Props = {
     currentPosition: LatLng;
     steps: google.maps.DirectionsStep[] | undefined;
     className?: string;
+    lanes: number[];
     style?: React.CSSProperties;
 };
 
@@ -105,4 +106,28 @@ export function remainingMetersOnStep(
     }
 
     return remaining;
+}
+
+export function distance(
+  a: {latitude: number; longitude: number},
+  b: {latitude: number; longitude: number}
+) {
+  const dx = b.latitude - a.latitude;
+  const dy = b.longitude - a.longitude;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function bearing(
+  a: {latitude: number; longitude: number},
+  b: {latitude: number; longitude: number}
+) {
+  const lat1 = (a.latitude * Math.PI) / 180;
+  const lat2 = (b.latitude * Math.PI) / 180;
+  const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  const brng = (Math.atan2(y, x) * 180) / Math.PI;
+  return (brng + 360) % 360;
 }

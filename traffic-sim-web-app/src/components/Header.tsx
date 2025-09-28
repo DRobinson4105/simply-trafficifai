@@ -41,16 +41,21 @@ export default function Header({
 	currentPosition,
 	steps,
 	className,
+	lanes,
 	style,
 }: Props) {
 	const [stepIdx, setStepIdx] = useState(0);
+<<<<<<< Updated upstream
 	const [lanes, setLanes] = useState<boolean[]>([]);
+=======
+>>>>>>> Stashed changes
 
 	useEffect(() => {
 		setStepIdx(0);
 	}, [steps]);
 
 	useEffect(() => {
+<<<<<<< Updated upstream
 		async function fetchLanes() {
 			try {
 			const res = await fetch("http://localhost:5001/api/get-optimal-lanes", { method: "GET" });
@@ -69,6 +74,8 @@ export default function Header({
 	}, []);
 
 	useEffect(() => {
+=======
+>>>>>>> Stashed changes
 		if (!steps?.length) return;
 
 		const SWITCH_AT_M = 12;
@@ -79,11 +86,14 @@ export default function Header({
 			nextIdx += 1;
 			rem = remainingMetersOnStep(steps[nextIdx], currentPosition);
 		}
+<<<<<<< Updated upstream
 
 		const advanced = nextIdx !== stepIdx;
 		if (advanced) {
 			setStepIdx(nextIdx);
 		}
+=======
+>>>>>>> Stashed changes
 	}, [currentPosition, steps, stepIdx]);
 
 	const currentStep =
@@ -138,7 +148,7 @@ export default function Header({
 				/>
 			</div>
 			<div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: -1 }}>
-				{!!lanes.length && (
+				{lanes.length && (
 					<div
 						style={{
 							display: "flex",

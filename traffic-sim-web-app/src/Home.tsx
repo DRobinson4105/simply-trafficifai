@@ -11,204 +11,11 @@ import MjpegView from "./components/MjpegView";
 import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyD9vhPD7sZWUMOgb3KUDLujDdRwcbrJB_I";
-
-function distance(
-  a: {latitude: number; longitude: number},
-  b: {latitude: number; longitude: number}
-) {
-  const dx = b.latitude - a.latitude;
-  const dy = b.longitude - a.longitude;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function bearing(
-  a: {latitude: number; longitude: number},
-  b: {latitude: number; longitude: number}
-) {
-  const lat1 = (a.latitude * Math.PI) / 180;
-  const lat2 = (b.latitude * Math.PI) / 180;
-  const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  const brng = (Math.atan2(y, x) * 180) / Math.PI;
-  return (brng + 360) % 360;
-}
-
-const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
-  // Base tones
-  {elementType: "geometry", stylers: [{color: "#0b111b"}]},
-  {elementType: "labels.text.fill", stylers: [{color: "#ffffffff"}]},
-  {elementType: "labels.text.stroke", stylers: [{color: "#000000ff"}]},
-
-  // Hide clutter
-  {featureType: "poi", stylers: [{visibility: "off"}]},
-  {featureType: "transit", stylers: [{visibility: "off"}]},
-  {featureType: "administrative", stylers: [{visibility: "off"}]},
-  {
-    featureType: "road",
-    elementType: "labels.icon",
-    stylers: [{visibility: "off"}],
-  },
-  {
-    featureType: "road.local",
-    elementType: "labels.text",
-    stylers: [{visibility: "off"}],
-  },
-
-  // Roads—simle but distinct
-  {
-    featureType: "all",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#ffffff",
-      },
-    ],
-  },
-  {
-    featureType: "all",
-    elementType: "labels.text.stroke",
-    stylers: [
-      {
-        color: "#000000",
-      },
-      {
-        lightness: 13,
-      },
-    ],
-  },
-  {
-    featureType: "administrative",
-    elementType: "geometry.fill",
-    stylers: [
-      {
-        color: "#000000",
-      },
-    ],
-  },
-  {
-    featureType: "administrative",
-    elementType: "geometry.stroke",
-    stylers: [
-      {
-        color: "#144b53",
-      },
-      {
-        lightness: 14,
-      },
-      {
-        weight: 1.4,
-      },
-    ],
-  },
-  {
-    featureType: "landscape",
-    elementType: "all",
-    stylers: [
-      {
-        color: "#08304b",
-      },
-    ],
-  },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#0c4152",
-      },
-      {
-        lightness: 5,
-      },
-    ],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.fill",
-    stylers: [
-      {
-        color: "#000000",
-      },
-    ],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [
-      {
-        color: "#0b434f",
-      },
-      {
-        lightness: 10,
-      },
-    ],
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry.fill",
-    stylers: [
-      {
-        color: "#000000",
-      },
-    ],
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry.stroke",
-    stylers: [
-      {
-        color: "#0b3d51",
-      },
-      {
-        lightness: 16,
-      },
-    ],
-  },
-  {
-    featureType: "road.local",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#000000",
-      },
-    ],
-  },
-  {
-    featureType: "transit",
-    elementType: "all",
-    stylers: [
-      {
-        color: "#146474",
-      },
-    ],
-  },
-  {
-    featureType: "water",
-    elementType: "all",
-    stylers: [
-      {
-        color: "#021019",
-      },
-    ],
-  },
-];
+const GOOGLE_MAPS_API_KEY = process.env.GMAPS_API_KEY || "AIzaSyBmSsGJqFYFeLPZ5xymN77M-Eq687E9VCU";
 
 export type LatLng = {latitude: number; longitude: number};
-type Alert = {startIndex: number; endIndex: number; info: string};
 
 export default function HomeScreen() {
-  const alerts = useMemo<Alert[]>(
-    () => [
-      {startIndex: 20, endIndex: 40, info: "Lane 2: 45 mph"},
-      {startIndex: 80, endIndex: 130, info: "Construction ahead in Lane 1"},
-      {startIndex: 120, endIndex: 160, info: "Lane 3: 50 mph"},
-    ],
-    []
-  );
-
   const distances = useMemo(
     () =>
       route.map((p: LatLng, i: number) =>
@@ -242,12 +49,19 @@ export default function HomeScreen() {
 
   const {isLoaded} = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    id: "google-map-script",
+    id: MAPS_ID,
     version: "weekly",
     language: "en",
     region: "US",
-    libraries: ["maps"],
+    libraries: MAPS_LIBRARIES,
   });
+
+  const { alertText: currentAlert, lanes: currentLanes } = Poller(6000, currentPosition);
+
+  useEffect(() =>
+  {
+    if (currentAlert) Speak(currentAlert);
+  }, [currentAlert]);
 
   const didBootPostRef = useRef(false);
 
@@ -260,8 +74,13 @@ export default function HomeScreen() {
         await fetch('http://localhost:5001/api/build-path', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(route),
-          keepalive: true,
+          body: JSON.stringify(route)
+        })
+        console.log('update')
+        await fetch('http://localhost:5001/api/update', {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({"latitude": route[0]["latitude"], "longitude": route[0]["longitude"]})
         });
       } catch (err) {
         console.warn("Startup POST failed:", err);
@@ -300,7 +119,7 @@ export default function HomeScreen() {
       },
       (res, status) => {
         if (
-          status === google.maps.DirectionsStatus.OK &&
+          status === "OK" &&
           res &&
           res.routes[0]
         ) {
@@ -327,21 +146,6 @@ useEffect(() => {
 
 useEffect(() => {
   if (!isLoaded || !playing) return;
-
-  // Run the update here since we want to update data while our animation loop plays
-  (async () => {
-    try {
-      await fetch('http://localhost:5001/api/update', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(currentPosition || route[0]),
-        keepalive: true,
-      });
-    } catch (err) {
-      console.warn("Startup POST failed:", err);
-    }
-  })();
-
   let frameId = 0;
   const speak = (msg: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -405,10 +209,15 @@ useEffect(() => {
   };
 
   frameId = requestAnimationFrame(animate);
+
   return () => cancelAnimationFrame(frameId);
 
+<<<<<<< Updated upstream
   // Don't forget to include all needed dependencies!
 }, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance, alerts]);
+=======
+}, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance]);
+>>>>>>> Stashed changes
   const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
   const prev = route[idx - 1];
   const next = route[idx];
@@ -575,7 +384,7 @@ useEffect(() => {
             Loading map…
           </div>
         )}
-        <Header currentPosition={currentPosition} steps={steps} />
+        <Header currentPosition={currentPosition} steps={steps} lanes={currentLanes} />
 
         {currentAlert && (
           <div
