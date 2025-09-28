@@ -249,7 +249,6 @@ export default function HomeScreen() {
     libraries: ["maps"],
   });
 
-  // Fire the POST exactly once (even in React 18 StrictMode dev)
   const didBootPostRef = useRef(false);
 
   useEffect(() => {
@@ -258,7 +257,7 @@ export default function HomeScreen() {
 
     (async () => {
       try {
-        await fetch('api/build-path', {
+        await fetch('http://localhost:5001/api/build-path', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(route),
@@ -326,9 +325,22 @@ useEffect(() => {
   return () => window.removeEventListener('keydown', handleKeyDown);
 }, []);
 
-// --- ANIMATION EFFECT ---
 useEffect(() => {
   if (!isLoaded || !playing) return;
+
+  // Run the update here since we want to update data while our animation loop plays
+  (async () => {
+    try {
+      await fetch('http://localhost:5001/api/update', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(currentPosition || route[0]),
+        keepalive: true,
+      });
+    } catch (err) {
+      console.warn("Startup POST failed:", err);
+    }
+  })();
 
   let frameId = 0;
   const speak = (msg: string) => {
@@ -343,8 +355,8 @@ useEffect(() => {
     const step = Math.min(speed, maxSpeed);
     progressLocal.current += step;
     if (progressLocal.current >= totalDistance) {
-      setPlaying(false); // <-- pause when at end
-      return; // <-- exit animation, don't update position, don't call RAF again
+      setPlaying(false);
+      return;
     }
 
     let traveled = 0;

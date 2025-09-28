@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 
 type Props = {
   text?: string | null;
-  statusUrl?: string;
   pollMs?: number;
   className?: string;
   style?: React.CSSProperties;
@@ -11,7 +10,6 @@ type Props = {
 
 export default function AlertBox({
   text,
-  statusUrl = "/api/status",
   pollMs = 5000,
   className,
   style,
@@ -28,7 +26,7 @@ export default function AlertBox({
 
     async function load() {
       try {
-        const res = await fetch("api/get-alert", { method: "GET", signal: ac.signal });
+        const res = await fetch("http://localhost:5001/api/get-alert", { method: "GET", signal: ac.signal });
         const json = await res.json();
 
         let value: string | null = null;
@@ -49,7 +47,7 @@ export default function AlertBox({
       ac.abort();
       if (id) clearInterval(id);
     };
-  }, [text, statusUrl, pollMs]);
+  }, [text, pollMs]);
 
   const value = text === undefined ? serverText : text;
 

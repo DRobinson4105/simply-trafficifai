@@ -53,7 +53,7 @@ export default function Header({
 	useEffect(() => {
 		async function fetchLanes() {
 			try {
-			const res = await fetch("/api/get-optimal-lanes", { method: "GET" });
+			const res = await fetch("http://localhost:5001/api/get-optimal-lanes", { method: "GET" });
 			const json = await res.json();
 
 			const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
@@ -68,19 +68,8 @@ export default function Header({
 		fetchLanes();
 	}, []);
 
-	const didMountRef = React.useRef(false);
-
 	useEffect(() => {
 		if (!steps?.length) return;
-
-		const qs = new URLSearchParams({
-			lat: currentPosition.latitude.toFixed(6),
-			lng: currentPosition.longitude.toFixed(6),
-		});
-		fetch(`/api/update?${qs.toString()}`, {
-			method: "PUT",
-			keepalive: true,
-		}).catch(() => {});
 
 		const SWITCH_AT_M = 12;
 
