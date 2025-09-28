@@ -206,7 +206,8 @@ export default function Header({
 					lat: currentPosition.latitude.toFixed(6),
 					lng: currentPosition.longitude.toFixed(6),
 				});
-				fetch(`/api/update?${qs.toString()}`, {
+				console.log('update')
+				fetch(`http://localhost:5001/api/api/update?${qs.toString()}`, {
 					method: "PUT",
 					keepalive: true,
 				}).catch(() => {});

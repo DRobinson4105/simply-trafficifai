@@ -258,11 +258,17 @@ export default function HomeScreen() {
 
     (async () => {
       try {
-        await fetch('api/build-path', {
+        console.log('build')
+        console.log(JSON.stringify(route))
+        await fetch('http://localhost:5001/api/build-path', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(route),
-          keepalive: true,
+          body: JSON.stringify(route)
+        });
+        await fetch('http://localhost:5001/api/update', {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({"latitude": route[0]["latitude"], "longitude": route[1]["latitude"]})
         });
       } catch (err) {
         console.warn("Startup POST failed:", err);
@@ -618,7 +624,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/camera1"} />
+          <MjpegView src={"http://localhost:5001/api/camera1"} />
         </div>
 
         <div
@@ -631,7 +637,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/camera2"} />
+          <MjpegView src={"http://localhost:5001/api/camera2"} />
         </div>
 
         <div
@@ -644,7 +650,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/camera3"} />
+          <MjpegView src={"http://localhost:5001/api/camera3"} />
         </div>
       </div>
     </div>

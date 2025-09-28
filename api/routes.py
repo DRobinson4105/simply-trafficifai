@@ -7,11 +7,15 @@ from ultralytics import YOLO
 import numpy as np
 from threading import Lock
 import time
+import torch
 
 app = Flask(__name__)
 CORS(app)
 
-EPS=1e-2
+torch.set_grad_enabled(False)
+cv2.setNumThreads(1)
+
+EPS=1e-3
 
 with open('camera_metadata.json', 'r') as fp:
     camera_data = json.load(fp)
@@ -20,7 +24,7 @@ cameras = Queue()
 used_cameras = set()
 current = []
 
-frame = 0
+frame_count = 0
 
 model = YOLO("yolo11x.pt")
 
@@ -29,18 +33,19 @@ camera_locks = [Lock(), Lock(), Lock()]
 
 @app.route('/api/build-path', methods=['POST'])
 def build_path():
-    data = request.get_json()
-    route = data["route"]
+    route = request.get_json()
 
     for point in route:
-        closest = min(camera_data.keys(), key=lambda i: cv2.norm((camera_data[i].latitude, camera_data[i].longitude), (point.latitude, point.longitude)))
+        closest = min(camera_data.keys(), key=lambda i: cv2.norm((camera_data[i]["latitude"], camera_data[i]["longitude"]), (point["latitude"], point["longitude"])))
+        # print(cv2.norm((camera_data[closest]["latitude"], camera_data[closest]["longitude"]), (point["latitude"], point["longitude"])))
 
-        if cv2.norm((camera_data[closest].latitude, camera_data[closest].longitude), (point.latitude, point.longitude)) < EPS and closest not in used_cameras:
+        if cv2.norm((camera_data[closest]["latitude"], camera_data[closest]["longitude"]), (point["latitude"], point["longitude"])) and closest not in used_cameras:
             used_cameras.add(closest)
             cameras.put(closest)
 
     for _ in range(3):
         name = cameras.get()
+
         current.append({
             "name": name,
             "id_map": {}, # id -> prev center
@@ -48,8 +53,10 @@ def build_path():
             "tracked": {}, # id -> ((-1 * direction)lane, last_frame)
             "lane_speeds": [0] * len(camera_data[name]["average_speed"]),
             "lane_counts": [0] * len(camera_data[name]["average_speed"]),
-            "capture": cv2.VideoCapture(name)
+            "capture": cv2.VideoCapture(f'videos/{name}.ts')
         })
+
+    return "", 200
 
 def first_mask_with_point(masks, point):
     px, py = map(float, point)
@@ -66,7 +73,7 @@ def update():
     data = request.get_json()
     latitude, longitude = data["latitude"], data["longitude"]
     # if new camera is found, rotate current cameras and update to new data
-    if cv2.norm((camera_data[current[0]].latitude, camera_data[current[0]].longitude), (latitude, longitude)) < EPS:
+    if cv2.norm((camera_data[current[0]["name"]]["latitude"], camera_data[current[0]["name"]]["longitude"]), (latitude, longitude)) < EPS:
         current[0]["capture"].release()
 
         current[:2] = current[1:]
@@ -79,37 +86,42 @@ def update():
             "tracked": {}, # id -> ((-1 * direction)lane, last_frame)
             "lane_speeds": [0] * len(camera_data[name]["average_speed"]),
             "lane_counts": [0] * len(camera_data[name]["average_speed"]),
-            "capture": cv2.VideoCapture(name)
+            "capture": cv2.VideoCapture(f'videos/{name}.ts')
         }
 
     # then, run another tracking frame for all current videos
     for i in range(3):
-        current[i]["capture"].set(cv2.CAP_PROP_POS_FRAMES, frame)
+        global frame_count
+        # current[i]["capture"].set(cv2.CAP_PROP_POS_FRAMES, frame_count)
 
         ret, frame = current[i]["capture"].read()
         if not ret:
             return "Frame failed", 400
         
-        results = model(frame)
-        boxes = results[0].boxes
+        frame = np.ascontiguousarray(frame)
+        
+        print(1)
+        results = model.predict(source=frame, workers=0)
+        print(2)
 
+        boxes = results[0].boxes
+        
         pairs = list(current[i]["id_map"].items())
         ids, points = [x[0] for x in pairs], [x[1] for x in pairs]
-        print(current[i]["id_map"])
         new_id_map = {}
-
+        
         n = len(boxes.cls)
 
-        for i in range(n):
-            cls = int(boxes.cls[i].item())
+        for j in range(n):
+            cls = int(boxes.cls[j].item())
             if cls == 2:
-                cur = (boxes.xywh[i][0].item(), (boxes.xywh[i][1] + boxes.xywh[i][3] / 2).item())
+                cur = (boxes.xywh[j][0].item(), (boxes.xywh[j][1] + boxes.xywh[j][3] / 2).item())
 
                 if len(points) == 0:
                     cur_id = next_id
                     next_id += 1
                 else:
-                    closest_idx = min(range(len(points)), key=lambda i: cv2.norm(points[i], cur))
+                    closest_idx = min(range(len(points)), key=lambda a: cv2.norm(points[a], cur))
                     
                     if cv2.norm(points[closest_idx], cur) < 10:
                         cur_id = ids[closest_idx]
@@ -159,7 +171,13 @@ def update():
 
             current[i]["id_map"] = new_id_map
 
+    frame += 1
+
+    print('done')
+    return "", 200
+
 def stream(idx):
+    while camera_frames[idx] == None: pass
     while True:
         with camera_locks[idx]:
             jpg = camera_frames[idx]
