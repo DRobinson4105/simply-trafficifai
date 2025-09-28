@@ -200,17 +200,14 @@ export default function Header({
 		}
 
 		const advanced = nextIdx !== stepIdx;
+	
+        fetch('http://localhost:5001/api/update', {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({"latitude": currentPosition.latitude.toFixed(6), "longitude": currentPosition.longitude.toFixed(6)})
+        });
 		if (advanced) {
 			if (didMountRef.current) {
-				const qs = new URLSearchParams({
-					lat: currentPosition.latitude.toFixed(6),
-					lng: currentPosition.longitude.toFixed(6),
-				});
-				console.log('update')
-				fetch(`http://localhost:5001/api/api/update?${qs.toString()}`, {
-					method: "PUT",
-					keepalive: true,
-				}).catch(() => {});
 			} else {
 				didMountRef.current = true;
 			}

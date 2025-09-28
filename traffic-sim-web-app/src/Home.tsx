@@ -265,6 +265,8 @@ export default function HomeScreen() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(route)
         });
+
+        console.log('update')
         await fetch('http://localhost:5001/api/update', {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
