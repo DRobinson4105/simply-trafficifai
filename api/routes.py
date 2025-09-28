@@ -99,7 +99,7 @@ def update():
 def main_loop():
     global frame_count
     while True:
-        if len(current) == 0: continue
+        if len(current) < 3: continue
 
         for i in range(3):
             ret, frame = current[i]["capture"].read()
@@ -131,7 +131,7 @@ def main_loop():
                 else:
                     closest_idx = min(range(len(points)), key=lambda a: cv2.norm(points[a], cur))
                     
-                    if cv2.norm(points[closest_idx], cur) < 10:
+                    if cv2.norm(points[closest_idx], cur) < 15:
                         cur_id = ids[closest_idx]
                     else:
                         cur_id = current[i]["next_id"]
@@ -202,13 +202,20 @@ def camera3():
 
 @app.route('/api/get-optimal-lanes', methods=['GET'])
 def get_optimal_lanes():
-    # data = np.array(camera_data[current[0]["name"]]["average_speed"])
-    # return jsonify(((data - np.min(data)) / (np.max(data) - np.min(data))).tolist()), 200
-    return [True, True, False], 200
+    if len(current) == 0:
+        return [True], 200
+    
+    speeds = [y / x if y > 0 else 0 for x, y in zip(current[0]["lane_speeds"], current[0]["lane_counts"])]
+    highest = max(speeds)
+    return [x == highest for x in speeds], 200
 
 @app.route('/api/get-alert', methods=['GET'])
 def get_alert():
-    return "", 200
+    if len(current) == 0:
+        return "", 200
+    
+    speeds = [[y / x if y > 0 else 0 for x, y in zip(a["lane_speeds"], a["lane_counts"])] for a in current]
+    return f"{traffic_analyzer(speeds[0], speeds[1], speeds[2])} {lane_status_string(speeds[0])}", 200
 
 def _format_lane_list(idxs):
     if not idxs:
@@ -218,7 +225,7 @@ def _format_lane_list(idxs):
         return labels[0]
     if len(labels) == 2:
         return f"{labels[0]} & {labels[1]}"
-    return f"{', '.join(labels[:-1])} & {labels[-1]}"
+    return f"{', '.join(labels[:-1])} and {labels[-1]}"
 
 def _compose_status(clear_idxs, obstructed_idxs):
     parts = []
@@ -231,12 +238,12 @@ def _compose_status(clear_idxs, obstructed_idxs):
         verb = "is" if len(obstructed_idxs) == 1 else "are"
         parts.append(f"{subject} {verb} obstructed")
     return (("; ".join(parts) + ".") if parts
-            else "No lanes classified as clear or obstructed.")
+            else "")
 
 def lane_status_string(speeds, obstructed_threshold=0.35, clear_percentile=75):
     speeds = [float(s) for s in speeds]
     if not speeds:
-        return "No lane data."
+        return ""
 
     obstructed_idxs = [i for i, s in enumerate(speeds) if s < obstructed_threshold]
 
@@ -258,9 +265,6 @@ def traffic_analyzer(a_speeds, b_speeds, c_speeds, eps=1e-6):
         return (x is not None) and (y is not None) and (x > y + eps)
 
     a, b, c = avg(a_speeds), avg(b_speeds), avg(c_speeds)
-
-    if a is None or b is None or c is None:
-        return "Insufficient data to analyze traffic."
 
     if (gt(a, b) and gt(a, c)) or (gt(a, c) and gt(b, c)):
         return "Traffic building up ahead."

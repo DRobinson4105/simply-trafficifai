@@ -6,3 +6,4 @@ traffic-sim-web-app/node_modules
 .vscode
 venv
 yolo11x.pt
+build
