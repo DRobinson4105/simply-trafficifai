@@ -8,6 +8,7 @@ import numpy as np
 from threading import Lock, Thread
 import time
 import torch
+from waitress import serve
 
 device = 0 if torch.cuda.is_available() else "cpu"
 
@@ -96,6 +97,7 @@ def update():
     return "", 200
 
 def main_loop():
+    global frame_count
     while True:
         if len(current) == 0: continue
 
@@ -144,14 +146,11 @@ def main_loop():
 
                     if cur_id in current[i]["tracked"].keys():
                         if current[i]["tracked"][cur_id][0] == -1 * dir * (lane + 1):
-                            current[i]["lane_speeds"][lane] += frame - current[i]["tracked"][cur_id][1]
+                            current[i]["lane_speeds"][lane] += frame_count - current[i]["tracked"][cur_id][1]
                             current[i]["lane_counts"][lane] += 1
                             current[i]["tracked"].pop(cur_id)
-                            # print(f'{cur_id} crossed lane {lane} at frame {idx}')
-                            # print(f'end: {cur_id} {dir} {lane} {frame} {cur}')
                     else:
-                        # print(f'start: {cur_id} {dir} {lane} {frame} {cur}')
-                        current[i]["tracked"][cur_id] = (dir * (lane + 1), frame)
+                        current[i]["tracked"][cur_id] = (dir * (lane + 1), frame_count)
 
             annotated = results[0].plot()
 
@@ -172,6 +171,8 @@ def main_loop():
                 camera_frames[i] = jpg
 
             current[i]["id_map"] = new_id_map
+        
+        frame_count += 1
 
 def stream(idx):
     while True:
@@ -208,4 +209,4 @@ def get_alert():
 if __name__ == '__main__':
     t = Thread(target=main_loop, daemon=True)
     t.start()
-    app.run(host='0.0.0.0', port=5001, debug=True, threaded=True)
+    serve(app, host='0.0.0.0', port=5001)
