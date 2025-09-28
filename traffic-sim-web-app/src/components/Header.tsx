@@ -1,121 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Lane, laneArrowDataUrl } from "./Lane";
-
-export type LatLng = { latitude: number; longitude: number };
-
-type Props = {
-	currentPosition: LatLng;
-	steps: google.maps.DirectionsStep[] | undefined;
-	className?: string;
-	style?: React.CSSProperties;
-};
-
-function toRad(d: number) {
-	return (d * Math.PI) / 180;
-}
-
-function haversineMeters(
-	a: { latitude: number; longitude: number },
-	b: { latitude: number; longitude: number }
-) {
-	const R = 6371000;
-	const dLat = toRad(b.latitude - a.latitude);
-	const dLon = toRad(b.longitude - a.longitude);
-	const lat1 = toRad(a.latitude);
-	const lat2 = toRad(b.latitude);
-	const sinDLat = Math.sin(dLat / 2);
-	const sinDLon = Math.sin(dLon / 2);
-	const h =
-		sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
-	return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
-function metersToMiles(m: number) {
-	return m / 1609.344;
-}
-
-function projectOntoSegment(pos: LatLng, a: LatLng, b: LatLng) {
-	const mPerDegLat = 111320;
-	const mPerDegLon = 111320 * Math.cos(toRad(pos.latitude));
-
-	const ax = (a.longitude - pos.longitude) * mPerDegLon;
-	const ay = (a.latitude - pos.latitude) * mPerDegLat;
-	const bx = (b.longitude - pos.longitude) * mPerDegLon;
-	const by = (b.latitude - pos.latitude) * mPerDegLat;
-
-	const vx = bx - ax;
-	const vy = by - ay;
-	const wx = -ax;
-	const wy = -ay;
-
-	const vv = vx * vx + vy * vy;
-	let t = vv === 0 ? 0 : (wx * vx + wy * vy) / vv;
-	t = Math.max(0, Math.min(1, t));
-
-	const projX = ax + t * vx;
-	const projY = ay + t * vy;
-
-	const projLon = projX / mPerDegLon + pos.longitude;
-	const projLat = projY / mPerDegLat + pos.latitude;
-
-	return { t, lat: projLat, lng: projLon };
-}
-
-function remainingMetersOnStep(
-	step: google.maps.DirectionsStep,
-	currentPosition: LatLng
-) {
-	const path = (step as unknown as { path?: google.maps.LatLng[] }).path || [];
-	const end = step.end_location;
-
-	if (!path.length && end) {
-		return haversineMeters(currentPosition, {
-			latitude: end.lat(),
-			longitude: end.lng(),
-		});
-	}
-	if (path.length <= 1) return 0;
-
-	let best = {
-		distToProj: Number.POSITIVE_INFINITY,
-		seg: 0,
-		proj: { lat: path[0].lat(), lng: path[0].lng() },
-	};
-
-	for (let i = 0; i < path.length - 1; i++) {
-		const a = { latitude: path[i].lat(), longitude: path[i].lng() };
-		const b = { latitude: path[i + 1].lat(), longitude: path[i + 1].lng() };
-		const proj = projectOntoSegment(currentPosition, a, b);
-		const d = haversineMeters(currentPosition, {
-			latitude: proj.lat,
-			longitude: proj.lng,
-		});
-		if (d < best.distToProj) {
-			best = { distToProj: d, seg: i, proj: { lat: proj.lat, lng: proj.lng } };
-		}
-	}
-
-	let remaining = 0;
-
-	const nextIdx = best.seg + 1;
-	if (nextIdx >= path.length) return 0;
-	const firstNext = {
-		latitude: path[nextIdx].lat(),
-		longitude: path[nextIdx].lng(),
-	};
-	remaining += haversineMeters(
-		{ latitude: best.proj.lat, longitude: best.proj.lng },
-		firstNext
-	);
-
-	for (let j = nextIdx; j < path.length - 1; j++) {
-		const u = { latitude: path[j].lat(), longitude: path[j].lng() };
-		const v = { latitude: path[j + 1].lat(), longitude: path[j + 1].lng() };
-		remaining += haversineMeters(u, v);
-	}
-
-	return remaining;
-}
+import { Props, metersToMiles, remainingMetersOnStep } from "../utils/MathUtils"
 
 function ManeuverIcon({ maneuver }: { maneuver?: string | null }) {
 	const map: Record<string, number> = {
@@ -167,25 +52,21 @@ export default function Header({
 
 	useEffect(() => {
 		async function fetchLanes() {
-			// try {
-			// const res = await fetch("/api/get-optimal-lanes", { method: "GET" });
-			// const json = await res.json();
+			try {
+			const res = await fetch("http://localhost:5001/api/get-optimal-lanes", { method: "GET" });
+			const json = await res.json();
 
-			// const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
-			// if (Array.isArray(arr)) {
-			//   setLanes(arr.map(Boolean));
-			// }
-			// } catch {
-			// console.error("Error fetching lane data\n");
-			// }
-			let ARRAY: Array<boolean> = Array(true, true, true, true);
-			setLanes(ARRAY);
+			const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
+			if (Array.isArray(arr)) {
+			  setLanes(arr.map(Boolean));
+			}
+			} catch {
+			console.error("Error fetching lane data\n");
+			}
 		}
 
 		fetchLanes();
 	}, []);
-
-	const didMountRef = React.useRef(false);
 
 	useEffect(() => {
 		if (!steps?.length) return;
@@ -207,11 +88,6 @@ export default function Header({
           body: JSON.stringify({"latitude": currentPosition.latitude.toFixed(6), "longitude": currentPosition.longitude.toFixed(6)})
         });
 		if (advanced) {
-			if (didMountRef.current) {
-			} else {
-				didMountRef.current = true;
-			}
-
 			setStepIdx(nextIdx);
 		}
 	}, [currentPosition, steps, stepIdx]);
