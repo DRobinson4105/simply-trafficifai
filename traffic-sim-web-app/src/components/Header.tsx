@@ -44,7 +44,7 @@ export default function Header({
 	style,
 }: Props) {
 	const [stepIdx, setStepIdx] = useState(0);
-	const [lanes, setLanes] = useState<boolean[]>([]);
+	const [lanes, setLanes] = useState<number[]>([]);
 
 	useEffect(() => {
 		setStepIdx(0);
@@ -58,7 +58,7 @@ export default function Header({
 
 			const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
 			if (Array.isArray(arr)) {
-			  setLanes(arr.map(Boolean));
+			  setLanes(arr.map(Number));
 			}
 			} catch {
 			console.error("Error fetching lane data\n");
@@ -155,13 +155,12 @@ export default function Header({
 						}}
 						aria-label="Lane status"
 					>
-						{lanes.map((blocked, i) => (
+						{lanes.map((blockage, i) => (
 							<img
 								key={i}
-								src={laneArrowDataUrl(blocked, 18)}
+								src={laneArrowDataUrl(blockage, 18)}
 								width={18}
 								height={18}
-								alt={blocked ? "Lane blocked" : "Lane open"}
 								style={{ display: "block" }}
 							/>
 						))}
