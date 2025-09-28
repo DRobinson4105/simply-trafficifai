@@ -210,7 +210,7 @@ def get_optimal_lanes():
 def get_alert():
     return "", 200
 
-def format_lane_list(idxs):
+def _format_lane_list(idxs):
     if not idxs:
         return ""
     labels = [f"Lane {i+1}" for i in idxs]
@@ -220,32 +220,54 @@ def format_lane_list(idxs):
         return f"{labels[0]} & {labels[1]}"
     return f"{', '.join(labels[:-1])} & {labels[-1]}"
 
-def compose_status(clear_idxs, obs_idxs):
+def _compose_status(clear_idxs, obstructed_idxs):
     parts = []
     if clear_idxs:
-        subject = format_lane_list(clear_idxs)
+        subject = _format_lane_list(clear_idxs)
         verb = "is" if len(clear_idxs) == 1 else "are"
         parts.append(f"{subject} {verb} clear")
-    if obs_idxs:
-        p1 = format_lane_list(obs_idxs)
-        p2 = "is" if len(obs_idxs) == 1 else "are"
-        parts.append(f"{p1} {p2} backed up")
+    if obstructed_idxs:
+        subject = _format_lane_list(obstructed_idxs)
+        verb = "is" if len(obstructed_idxs) == 1 else "are"
+        parts.append(f"{subject} {verb} obstructed")
     return (("; ".join(parts) + ".") if parts
-            else "")
+            else "No lanes classified as clear or obstructed.")
 
-def lane_status_string(speeds, obs_thresh=35.0, clear_amt=75):
+def lane_status_string(speeds, obstructed_threshold=0.35, clear_percentile=75):
     speeds = [float(s) for s in speeds]
+    if not speeds:
+        return "No lane data."
 
-    obs_idxs = [i for i, s in enumerate(speeds) if s < obs_thresh]
+    obstructed_idxs = [i for i, s in enumerate(speeds) if s < obstructed_threshold]
 
-    non_obs = [(i, s) for i, s in enumerate(speeds) if i not in obs_idxs]
+    non_obstructed = [(i, s) for i, s in enumerate(speeds) if i not in obstructed_idxs]
     clear_idxs = []
-    if non_obs:
-        _, non_obs_speeds = zip(*non_obs)
-        thresh = np.percentile(non_obs_speeds, clear_amt)
-        clear_idxs = [i for i, s in non_obs if s >= thresh]
+    if non_obstructed:
+        _, non_obs_speeds = zip(*non_obstructed)
+        thresh = np.percentile(non_obs_speeds, clear_percentile)
+        clear_idxs = [i for i, s in non_obstructed if s >= thresh]
 
-    return compose_status(clear_idxs, obs_idxs)
+    return _compose_status(clear_idxs, obstructed_idxs)
+
+def traffic_analyzer(a_speeds, b_speeds, c_speeds, eps=1e-6):
+    def avg(vals):
+        vals = [float(v) for v in vals if v is not None]
+        return (sum(vals) / len(vals)) if vals else None
+
+    def gt(x, y):
+        return (x is not None) and (y is not None) and (x > y + eps)
+
+    a, b, c = avg(a_speeds), avg(b_speeds), avg(c_speeds)
+
+    if a is None or b is None or c is None:
+        return "Insufficient data to analyze traffic."
+
+    if (gt(a, b) and gt(a, c)) or (gt(a, c) and gt(b, c)):
+        return "Traffic building up ahead."
+    if (gt(c, a) and gt(c, b)) or (gt(c, a) and gt(b, a)):
+        return "Traffic reducing ahead."
+    return ""
+
 
 if __name__ == '__main__':
     t = Thread(target=main_loop, daemon=True)
