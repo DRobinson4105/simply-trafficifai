@@ -26,7 +26,7 @@ current = []
 
 frame_count = 0
 
-model = YOLO("yolo11n.pt")
+model = YOLO("yolo11l.pt")
 
 camera_frames = [None, None, None]
 camera_locks = [Lock(), Lock(), Lock()]
@@ -106,7 +106,13 @@ def main_loop():
             if not ret:
                 return "Frame failed", 400
             
-            results = model.predict(source=frame, device=device)
+            with torch.inference_mode():
+                results = model(
+                    source=frame,
+                    classes=[2],
+                    verbose=False,
+                    device=device
+                )
 
             boxes = results[0].boxes
             
@@ -117,40 +123,38 @@ def main_loop():
             n = len(boxes.cls)
 
             for j in range(n):
-                cls = int(boxes.cls[j].item())
-                if cls == 2:
-                    cur = (boxes.xywh[j][0].item(), (boxes.xywh[j][1] + boxes.xywh[j][3] / 2).item())
+                cur = (boxes.xywh[j][0].item(), (boxes.xywh[j][1] + boxes.xywh[j][3] / 2).item())
 
-                    if len(points) == 0:
+                if len(points) == 0:
+                    cur_id = current[i]["next_id"]
+                    current[i]["next_id"] += 1
+                else:
+                    closest_idx = min(range(len(points)), key=lambda a: cv2.norm(points[a], cur))
+                    
+                    if cv2.norm(points[closest_idx], cur) < 10:
+                        cur_id = ids[closest_idx]
+                    else:
                         cur_id = current[i]["next_id"]
                         current[i]["next_id"] += 1
-                    else:
-                        closest_idx = min(range(len(points)), key=lambda a: cv2.norm(points[a], cur))
-                        
-                        if cv2.norm(points[closest_idx], cur) < 10:
-                            cur_id = ids[closest_idx]
-                        else:
-                            cur_id = current[i]["next_id"]
-                            current[i]["next_id"] += 1
 
-                    new_id_map[cur_id] = cur
-                    
-                    lane = first_mask_with_point(camera_data[current[i]["name"]]["mask1"], cur)
-                    dir = 1
+                new_id_map[cur_id] = cur
+                
+                lane = first_mask_with_point(camera_data[current[i]["name"]]["mask1"], cur)
+                dir = 1
 
-                    if lane is None:
-                        lane = first_mask_with_point(camera_data[current[i]["name"]]["mask2"], cur)
-                        dir = -1
+                if lane is None:
+                    lane = first_mask_with_point(camera_data[current[i]["name"]]["mask2"], cur)
+                    dir = -1
 
-                    if lane is None: continue
+                if lane is None: continue
 
-                    if cur_id in current[i]["tracked"].keys():
-                        if current[i]["tracked"][cur_id][0] == -1 * dir * (lane + 1):
-                            current[i]["lane_speeds"][lane] += frame_count - current[i]["tracked"][cur_id][1]
-                            current[i]["lane_counts"][lane] += 1
-                            current[i]["tracked"].pop(cur_id)
-                    else:
-                        current[i]["tracked"][cur_id] = (dir * (lane + 1), frame_count)
+                if cur_id in current[i]["tracked"].keys():
+                    if current[i]["tracked"][cur_id][0] == -1 * dir * (lane + 1):
+                        current[i]["lane_speeds"][lane] += frame_count - current[i]["tracked"][cur_id][1]
+                        current[i]["lane_counts"][lane] += 1
+                        current[i]["tracked"].pop(cur_id)
+                else:
+                    current[i]["tracked"][cur_id] = (dir * (lane + 1), frame_count)
 
             annotated = results[0].plot()
 
