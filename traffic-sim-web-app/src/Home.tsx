@@ -12,11 +12,7 @@ import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
 import { AlertPoller, Speak } from "./utils/AlertPoller"
 
-<<<<<<< Updated upstream
-const GOOGLE_MAPS_API_KEY = process.env.GMAPS_API_KEY || "AIzaSyANXgXFUvPWqHbQiZxu0DZrmwQNhdPOTLU";
-=======
 const GOOGLE_MAPS_API_KEY = process.env.GMAPS_API_KEY || " ";
->>>>>>> Stashed changes
 
 function distance(
   a: {latitude: number; longitude: number},
