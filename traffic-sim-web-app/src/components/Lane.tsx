@@ -1,18 +1,17 @@
 import React from "react";
 
-export type Lane = {
+export type LaneT = {
   blockage: number;
   size?: number;
   style?: React.CSSProperties;
   className?: string;
 };
 
-export function laneArrowDataUrl(blockage: number, size = 30): string {
-  const color = mixHex("#ffffffff", "#00000000", blockage);
+export function laneDataUrl(blockage: number, size = 30): string {
+  const color = mixHex("#32ed19f3", "#ed1919ff", blockage);
   const svg = `
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size + 2} ${size + 2}' width='${size}' height='${size}' fill='${color}'>
-      <path d='M12 3l5 5h-3v13h-4V8H7l5-5z'/>
-      <path fill="${color}/>
+      <circle cx="${size / 2 + 1}" cy="${size / 2 + 1}" r="${size / 2}" fill="${color}"/>
     </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
@@ -37,8 +36,8 @@ function mixHex(a: string, b: string, t: number): string {
   return rgbToHex(r, g, b2);
 }
 
-export function Lane({ blockage, size = 30, style, className }: Lane) {
-  const src = laneArrowDataUrl(blockage, size);
+export function Lane({ blockage, size = 30, style, className }: LaneT) {
+  const src = laneDataUrl(blockage, size);
   return (
     <img
       src={src}

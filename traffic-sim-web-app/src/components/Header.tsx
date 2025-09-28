@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { laneArrowDataUrl } from "./Lane";
+import { laneDataUrl } from "./Lane";
 import { Props, metersToMiles, remainingMetersOnStep } from "../utils/MathUtils"
 
 function ManeuverIcon({ maneuver }: { maneuver?: string | null }) {
@@ -158,7 +158,7 @@ export default function Header({
 						{lanes.map((blockage, i) => (
 							<img
 								key={i}
-								src={laneArrowDataUrl(blockage, 18)}
+								src={laneDataUrl(blockage, 18)}
 								width={18}
 								height={18}
 								style={{ display: "block" }}

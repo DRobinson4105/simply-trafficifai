@@ -3,6 +3,7 @@
 traffic-sim-web-app/node_modules
 /server_file/api/__pycache__
 /server_file/api/venv
+/src/.env
 .vscode
 venv
 yolo11x.pt
