@@ -210,6 +210,43 @@ def get_optimal_lanes():
 def get_alert():
     return "", 200
 
+def format_lane_list(idxs):
+    if not idxs:
+        return ""
+    labels = [f"Lane {i+1}" for i in idxs]
+    if len(labels) == 1:
+        return labels[0]
+    if len(labels) == 2:
+        return f"{labels[0]} & {labels[1]}"
+    return f"{', '.join(labels[:-1])} & {labels[-1]}"
+
+def compose_status(clear_idxs, obs_idxs):
+    parts = []
+    if clear_idxs:
+        subject = format_lane_list(clear_idxs)
+        verb = "is" if len(clear_idxs) == 1 else "are"
+        parts.append(f"{subject} {verb} clear")
+    if obs_idxs:
+        p1 = format_lane_list(obs_idxs)
+        p2 = "is" if len(obs_idxs) == 1 else "are"
+        parts.append(f"{p1} {p2} backed up")
+    return (("; ".join(parts) + ".") if parts
+            else "")
+
+def lane_status_string(speeds, obs_thresh=35.0, clear_amt=75):
+    speeds = [float(s) for s in speeds]
+
+    obs_idxs = [i for i, s in enumerate(speeds) if s < obs_thresh]
+
+    non_obs = [(i, s) for i, s in enumerate(speeds) if i not in obs_idxs]
+    clear_idxs = []
+    if non_obs:
+        _, non_obs_speeds = zip(*non_obs)
+        thresh = np.percentile(non_obs_speeds, clear_amt)
+        clear_idxs = [i for i, s in non_obs if s >= thresh]
+
+    return compose_status(clear_idxs, obs_idxs)
+
 if __name__ == '__main__':
     t = Thread(target=main_loop, daemon=True)
     t.start()
