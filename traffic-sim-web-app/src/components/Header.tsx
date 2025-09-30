@@ -41,56 +41,14 @@ export default function Header({
 	currentPosition,
 	steps,
 	className,
+	lanes,
 	style,
 }: Props) {
 	const [stepIdx, setStepIdx] = useState(0);
-	const [lanes, setLanes] = useState<number[]>([]);
 
 	useEffect(() => {
 		setStepIdx(0);
 	}, [steps]);
-
-	useEffect(() => {
-		async function fetchLanes() {
-			try {
-			const res = await fetch("http://localhost:5001/api/get-optimal-lanes", { method: "GET" });
-			const json = await res.json();
-
-			const arr = Array.isArray(json) ? json : (json?.lanes ?? json?.laneBooleans);
-			if (Array.isArray(arr)) {
-			  setLanes(arr.map(Number));
-			}
-			} catch {
-			console.error("Error fetching lane data\n");
-			}
-		}
-
-		fetchLanes();
-	}, []);
-
-	useEffect(() => {
-		if (!steps?.length) return;
-
-		const SWITCH_AT_M = 12;
-
-		let nextIdx = Math.min(stepIdx, steps.length - 1);
-		let rem = remainingMetersOnStep(steps[nextIdx], currentPosition);
-		while (rem < SWITCH_AT_M && nextIdx < steps.length - 1) {
-			nextIdx += 1;
-			rem = remainingMetersOnStep(steps[nextIdx], currentPosition);
-		}
-
-		const advanced = nextIdx !== stepIdx;
-
-        fetch('http://localhost:5001/api/update', {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({"latitude": currentPosition.latitude.toFixed(6), "longitude": currentPosition.longitude.toFixed(6)})
-        });
-		if (advanced) {
-			setStepIdx(nextIdx);
-		}
-	}, [currentPosition, steps, stepIdx]);
 
 	const currentStep =
 		steps?.[Math.min(stepIdx, Math.max(0, (steps?.length ?? 1) - 1))] ?? null;
@@ -144,7 +102,7 @@ export default function Header({
 				/>
 			</div>
 			<div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: -1 }}>
-				{!!lanes.length && (
+				{lanes.length && (
 					<div
 						style={{
 							display: "flex",

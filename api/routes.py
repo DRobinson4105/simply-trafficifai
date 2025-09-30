@@ -15,7 +15,7 @@ device = 0 if torch.cuda.is_available() else "cpu"
 app = Flask(__name__)
 CORS(app)
 
-EPS=1e-3
+EPS=1e-2
 
 with open('camera_metadata.json', 'r') as fp:
     camera_data = json.load(fp)
@@ -203,7 +203,7 @@ def camera3():
 @app.route('/api/get-optimal-lanes', methods=['GET'])
 def get_optimal_lanes():
     if len(current) == 0:
-        return [True], 200
+        return [], 200
     
     speeds = [y / x if y > 0 else 0 for x, y in zip(current[0]["lane_speeds"], current[0]["lane_counts"])]
     highest = max(speeds)
@@ -211,11 +211,12 @@ def get_optimal_lanes():
 
 @app.route('/api/get-alert', methods=['GET'])
 def get_alert():
-    if len(current) == 0:
+    if len(current) < 3:
         return "", 200
     
     speeds = [[y / x if y > 0 else 0 for x, y in zip(a["lane_speeds"], a["lane_counts"])] for a in current]
-    return f"{traffic_analyzer(speeds[0], speeds[1], speeds[2])} {lane_status_string(speeds[0])}", 200
+
+    return traffic_analyzer(speeds[0], speeds[1], speeds[2]), 200
 
 def _format_lane_list(idxs):
     if not idxs:
@@ -266,14 +267,15 @@ def traffic_analyzer(a_speeds, b_speeds, c_speeds, eps=1e-6):
 
     a, b, c = avg(a_speeds), avg(b_speeds), avg(c_speeds)
 
-    if (gt(a, b) and gt(a, c)) or (gt(a, c) and gt(b, c)):
+    if (gt(b, c) and gt(b, a)):
+        return "Slight traffic ahead."
+    if (gt(a, b)):
         return "Traffic building up ahead."
-    if (gt(c, a) and gt(c, b)) or (gt(c, a) and gt(b, a)):
+    if (gt(b, a)):
         return "Traffic reducing ahead."
     return ""
-
 
 if __name__ == '__main__':
     t = Thread(target=main_loop, daemon=True)
     t.start()
-    serve(app, host='0.0.0.0', port=5001)
+    serve(app, host='0.0.0.0', port=5001, threads=16)

@@ -10,9 +10,13 @@ import Header from "./components/Header";
 import MjpegView from "./components/MjpegView";
 import AlertBox from "./components/AlertBox";
 import CenterButton from "./components/CenterButton";
-import { AlertPoller, Speak } from "./utils/AlertPoller"
+import { usePoller, Speak } from "./utils/Poller"
+import type { Libraries } from "@react-google-maps/api";
 
-const GOOGLE_MAPS_API_KEY = process.env.GMAPS_API_KEY || " ";
+const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GMAPS_API_KEY || "";
+const HOST = process.env.REACT_APP_HOST || "";
+
+const MAPS_LIBRARIES: Libraries = ["places"]; const MAPS_ID = "google-map-script";
 
 function distance(
   a: {latitude: number; longitude: number},
@@ -198,18 +202,8 @@ const NAV_MINIMAL_STYLE: google.maps.MapTypeStyle[] = [
 ];
 
 export type LatLng = {latitude: number; longitude: number};
-type Alert = {startIndex: number; endIndex: number; info: string};
 
 export default function HomeScreen() {
-  const alerts = useMemo<Alert[]>(
-    () => [
-      {startIndex: 20, endIndex: 40, info: "Lane 2: 45 mph"},
-      {startIndex: 80, endIndex: 130, info: "Construction ahead in Lane 1"},
-      {startIndex: 120, endIndex: 160, info: "Lane 3: 50 mph"},
-    ],
-    []
-  );
-
   const distances = useMemo(
     () =>
       route.map((p: LatLng, i: number) =>
@@ -224,6 +218,8 @@ export default function HomeScreen() {
 
   const [currentPosition, setCurrentPosition] = useState<LatLng>(route[0]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currAlert, setCurrAlert] = useState<string | null>("");
+  const [currLanes, setCurrLanes] = useState<number[]>([]);
   const [followVehicle, setFollowVehicle] = useState(true);
   const [speed] = useState(0.00003);
   const maxSpeed = 0.00003;
@@ -236,18 +232,21 @@ export default function HomeScreen() {
 
   const {isLoaded} = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    id: "google-map-script",
+    id: MAPS_ID,
     version: "weekly",
     language: "en",
     region: "US",
-    libraries: ["maps"],
+    libraries: MAPS_LIBRARIES,
   });
 
-  const currentAlert = AlertPoller(6000, false);
+  const { alertText, lanes } = usePoller(1000, currentPosition);
   useEffect(() =>
   {
-    if (currentAlert) Speak(currentAlert);
-  }, [currentAlert]);
+    console.log("speak");
+    setCurrAlert(alertText);
+    setCurrLanes(lanes);
+    if (currAlert) Speak(currAlert);
+  }, [alertText]);
 
   const didBootPostRef = useRef(false);
 
@@ -257,14 +256,14 @@ export default function HomeScreen() {
 
     (async () => {
       try {
-        await fetch('http://localhost:5001/api/build-path', {
+        await fetch(`http://${HOST}:5001/api/build-path`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(route)
         });
 
         console.log('update')
-        await fetch('http://localhost:5001/api/update', {
+        await fetch(`http://${HOST}:5001/api/update`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({"latitude": route[0]["latitude"], "longitude": route[1]["latitude"]})
@@ -334,11 +333,10 @@ useEffect(() => {
 useEffect(() => {
   if (!isLoaded || !playing) return;
 
-  // Run the update here since we want to update data while our animation loop plays
   (async () => {
     try {
-      await fetch('http://localhost:5001/api/update', {
-        method: "POST",
+      await fetch(`http://${HOST}:5001/api/update`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(currentPosition || route[0]),
         keepalive: true,
@@ -389,7 +387,7 @@ useEffect(() => {
   frameId = requestAnimationFrame(animate);
   return () => cancelAnimationFrame(frameId);
 
-}, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance, alerts]);
+}, [isLoaded, playing, speed, maxSpeed, route, distances, totalDistance]);
   const idx = Math.min(Math.max(currentIndex, 1), route.length - 1);
   const prev = route[idx - 1];
   const next = route[idx];
@@ -556,9 +554,9 @@ useEffect(() => {
             Loading map…
           </div>
         )}
-        <Header currentPosition={currentPosition} steps={steps} />
+        <Header currentPosition={currentPosition} steps={steps} lanes={currLanes}/>
 
-        {currentAlert && (
+        {currAlert && (
           <div
             style={{
               position: "absolute",
@@ -569,7 +567,7 @@ useEffect(() => {
               pointerEvents: "none",
             }}
           >
-            <AlertBox text={currentAlert}/>
+            <AlertBox text={currAlert}/>
           </div>
         )}
         <CenterButton
@@ -611,7 +609,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/api/camera1"} />
+          <MjpegView src={`http://${HOST}:5001/api/camera1`} />
         </div>
 
         <div
@@ -624,7 +622,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/api/camera2"} />
+          <MjpegView src={`http://${HOST}:5001/api/camera2`} />
         </div>
 
         <div
@@ -637,7 +635,7 @@ useEffect(() => {
             overflow: "hidden",
           }}
         >
-          <MjpegView src={"http://localhost:5001/api/camera3"} />
+          <MjpegView src={`http://${HOST}:5001/api/camera3`} />
         </div>
       </div>
     </div>

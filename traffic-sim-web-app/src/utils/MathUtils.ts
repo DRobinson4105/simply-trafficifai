@@ -4,6 +4,7 @@ export type Props = {
     currentPosition: LatLng;
     steps: google.maps.DirectionsStep[] | undefined;
     className?: string;
+    lanes: number[]
     style?: React.CSSProperties;
 };
 
